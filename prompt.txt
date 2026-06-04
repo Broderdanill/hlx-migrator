@@ -1,0 +1,21 @@
+podman build -t localhost/hlx-migrator-backend:latest -f java-arapi-service/Containerfile java-arapi-service
+podman build -t localhost/hlx-migrator-ui:latest -f python-ui/Containerfile python-ui
+
+
+
+Vi behöver justera lite på logiken och gränssnittet så det är snabbare att arbeta med.
+Till en början vill jag inte att det ska vara diff-läge på direkt utan att man bara väljer källmiljö och destination, men man måste aktivt i gränssnittet markera objekt och sedan trycka på "compare" och då ska en lista med resultat visas för varje objekt (likt den vi har nu fast mer tydligt kring skillnader osv)
+
+Så jag vill att gränssnittet i sig default alltså bara söker objekt som finns i källmiljön.
+På så vis tänker jag att gränssnittet i sig ska vara tillgängligt diret även innan cache lästs in helt också.
+
+Hoppas du förstår hur jag menar och vill att det ska fungera.
+
+sedan verkar inte Active Link Guides och Filter Guides och Menyer filtreras korrekt. Så kika en vända på hur du hämtar ut det för där verkar den inte bara visa relaterade till formulär med prefix som vi angett utan alla.
+Samma gäller för menyerna
+
+
+.app-icon {
+    width: 45px;
+    height: 45px;
+}

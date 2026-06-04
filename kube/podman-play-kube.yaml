@@ -1,0 +1,166 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hlx-migrator-config
+data:
+  environments.yaml: |
+    environments:
+      um:
+        host: ars-arserver
+        port: 46262
+        rpc: 390620
+        locale: sv_SE
+        timezone: Europe/Stockholm
+      utb:
+        host: ars-arserver
+        port: 46262
+        rpc: 390620
+        locale: sv_SE
+        timezone: Europe/Stockholm
+    scope:
+      include_form_prefixes: ["HLX*"]
+      exclude_form_prefixes: []
+    ui:
+      page_size: 100
+      max_page_size: 2000
+    diff:
+      ignore_order: true
+      ignore_keys:
+        - lastChanged
+        - lastModified
+        - lastModifiedBy
+        - modifiedDate
+        - timestamp
+        - owner
+        - changeDiary
+        - lastUpdate
+        - objectId
+        - recordId
+        - requestId
+        - createDate
+        - modifiedBy
+        - lastModifiedDate
+    sync:
+      auto_start: true
+      include_global: true
+      continue_on_error: true
+      details: true
+      details_concurrency: 2
+      details_max_per_type: 0
+      details_refresh_existing: false
+      incremental: true
+      purge_missing: false
+      detail_object_types:
+        - form
+        - active_link
+        - filter
+        - escalation
+        - menu
+        - active_link_guide
+        - filter_guide
+        - packing_list
+        - application
+        - image
+      object_types:
+        forms: true
+        form_details: false
+        form_detail_limit: 0
+        fields: true
+        views: true
+        active_links: true
+        filters: true
+        menus: true
+        escalations: true
+        active_link_guides: true
+        filter_guides: true
+        packing_lists: true
+        applications: true
+        containers: false
+        images: true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hlx-migrator-serverlogin
+type: Opaque
+stringData:
+  secrets.yaml: |
+    credentials:
+      um:
+        username: Demo
+        password: P@ssw0rd
+        authentication: ""
+      utb:
+        username: Demo
+        password: P@ssw0rd
+        authentication: ""
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hlx-migrator
+  labels:
+    app: hlx-migrator
+spec:
+  containers:
+    - name: hlx-migrator-ui
+      image: localhost/hlx-migrator-ui:latest
+      imagePullPolicy: Never
+      ports:
+        - containerPort: 8091
+          hostPort: 8091
+      env:
+        - name: HLX_ARAPI_BASE_URL
+          value: "http://127.0.0.1:8092"
+        - name: HLX_CONFIG_DIR
+          value: "/app/config"
+        - name: HLX_DATA_DIR
+          value: "/app/data"
+        - name: HLX_AUTO_SERVER_SYNC
+          value: "true"
+        - name: LOG_LEVEL
+          value: "INFO"
+      volumeMounts:
+        - name: config
+          mountPath: /app/config/environments.yaml
+          subPath: environments.yaml
+          readOnly: true
+        - name: serverlogin
+          mountPath: /app/config/secrets.yaml
+          subPath: secrets.yaml
+          readOnly: true
+        - name: data
+          mountPath: /app/data
+    - name: hlx-migrator-backend
+      image: localhost/hlx-migrator-backend:latest
+      imagePullPolicy: Never
+      ports:
+        - containerPort: 8092
+          hostPort: 8092
+      env:
+        - name: HLX_CONFIG_DIR
+          value: "/app/config"
+        - name: HLX_ARAPI_LIB_DIR
+          value: "/opt/arapi/lib"
+        - name: ARAPI_SERVICE_PORT
+          value: "8092"
+        - name: EXPORT_DIR
+          value: "/data/exports"
+        - name: LOG_LEVEL
+          value: "INFO"
+      volumeMounts:
+        - name: config
+          mountPath: /app/config/environments.yaml
+          subPath: environments.yaml
+          readOnly: true
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: config
+      configMap:
+        name: hlx-migrator-config
+    - name: serverlogin
+      secret:
+        secretName: hlx-migrator-serverlogin
+    - name: data
+      emptyDir: {}

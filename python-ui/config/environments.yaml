@@ -1,0 +1,36 @@
+environments:
+  um:
+    host: ars-arserver
+    port: 46262
+    rpc: 390620
+    locale: sv_SE
+    timezone: Europe/Stockholm
+  utb:
+    host: ars-arserver
+    port: 46262
+    rpc: 390620
+    locale: sv_SE
+    timezone: Europe/Stockholm
+scope:
+  include_form_prefixes: ["HLX*"]
+  exclude_form_prefixes: []
+sync:
+  auto_start: true
+  include_global: true
+  continue_on_error: true
+  object_types:
+    forms: true
+    form_details: false
+    form_detail_limit: 0
+    fields: true
+    views: true
+    active_links: true
+    filters: true
+    menus: true
+    escalations: true
+    active_link_guides: true
+    filter_guides: true
+    packing_lists: true
+    applications: true
+    containers: false
+    images: true

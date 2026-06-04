@@ -1,0 +1,24 @@
+FROM maven:3.9-eclipse-temurin-17 AS build
+
+WORKDIR /src
+
+COPY pom.xml .
+COPY src ./src
+COPY lib ./lib
+
+RUN mvn clean package -DskipTests
+RUN jar tf /src/target/hlx-migrator-arapi.jar | grep "com/fasterxml/jackson/databind/ObjectMapper.class"
+
+FROM eclipse-temurin:17-jre
+
+WORKDIR /app
+
+RUN mkdir -p /opt/arapi/lib
+
+COPY --from=build /src/target/hlx-migrator-arapi.jar /app/hlx-migrator-arapi.jar
+COPY lib/*.jar /opt/arapi/lib/
+
+EXPOSE 8092
+ENV LOG_LEVEL=INFO
+
+CMD ["java", "-cp", "/app/hlx-migrator-arapi.jar:/opt/arapi/lib/*", "se.arsbmc.hlxmigrator.arapi.Main"]

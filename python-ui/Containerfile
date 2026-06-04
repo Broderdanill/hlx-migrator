@@ -1,0 +1,12 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY app ./app
+COPY config ./config
+RUN mkdir -p /data/exports
+EXPOSE 8091
+ENV APP_PORT=8091
+ENV ARAPI_BASE_URL=http://localhost:8092
+ENV LOG_LEVEL=INFO
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${APP_PORT}"]
