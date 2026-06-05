@@ -21,7 +21,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="0.9.9-data-migration")
+app = FastAPI(title="HLX Migrator", version="1.0.3")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -530,6 +530,9 @@ def list_cached_objects_api(
     object_type: str,
     environment: str,
     q: str | None = None,
+    name_q: str | None = None,
+    timestamp_q: str | None = None,
+    changed_by_q: str | None = None,
     limit: int = 500,
     offset: int = 0,
     sort: str = "name",
@@ -549,49 +552,21 @@ def list_cached_objects_api(
         raise HTTPException(status_code=404, detail=f"Unknown environment: {environment}")
 
     q_norm = (q or "").strip()
+    name_q_norm = (name_q or "").strip()
+    timestamp_q_norm = (timestamp_q or "").strip()
+    changed_by_q_norm = (changed_by_q or "").strip()
     safe_limit = max(1, min(int(limit or 500), int(config_store.ui().get("max_page_size", 2000))))
     safe_offset = max(0, int(offset or 0))
     sort_key = (sort or "name").lower()
     sort_dir = (direction or "asc").lower()
 
-    with SessionLocal() as db:
-        base_filters = [
-            CachedObject.environment == environment,
-            CachedObject.object_type == object_type,
-        ]
-        if q_norm:
-            # SQLite uses LIKE case-insensitively for ASCII by default, and this
-            # also works acceptably for the AR object names we search here.
-            base_filters.append(CachedObject.object_name.ilike(f"%{q_norm}%"))
-
-        total = db.execute(select(func.count()).select_from(CachedObject).where(*base_filters)).scalar_one()
-
-        order_col = CachedObject.object_name
-        if sort_key == "lastseen":
-            order_col = CachedObject.last_seen
-        elif sort_key == "hash":
-            order_col = CachedObject.object_hash
-        # Timestamp / Last Changed By are derived from JSON, so keep DB sort by
-        # name for stable paging and let the browser sort the visible page.
-        order_expr = order_col.desc() if sort_dir == "desc" else order_col.asc()
-
-        stmt = (
-            select(CachedObject)
-            .where(*base_filters)
-            .order_by(order_expr, CachedObject.id.asc())
-            .offset(safe_offset)
-            .limit(safe_limit)
-        )
-        rows = list(db.execute(stmt).scalars().all())
-
-    objects = []
-    for row in rows:
+    def row_to_object(row: CachedObject) -> dict:
         try:
             data = json.loads(row.json_data or "{}")
         except Exception:
             data = {}
         meta = _object_metadata_columns(data)
-        objects.append({
+        return {
             "name": row.object_name,
             "objectType": row.object_type,
             "hash": row.object_hash,
@@ -599,7 +574,88 @@ def list_cached_objects_api(
             "timestamp": meta.get("timestamp") or "",
             "lastChangedBy": meta.get("lastChangedBy") or "",
             "definitionLoaded": bool(data.get("definitionLoaded")),
-        })
+        }
+
+    def object_matches_query(obj: dict, query: str) -> bool:
+        if not query:
+            return True
+        needle = query.lower()
+        return (
+            needle in str(obj.get("name") or "").lower()
+            or needle in str(obj.get("timestamp") or "").lower()
+            or needle in str(obj.get("lastChangedBy") or "").lower()
+        )
+
+    def object_matches_field_filters(obj: dict) -> bool:
+        if q_norm and not object_matches_query(obj, q_norm):
+            return False
+        if name_q_norm and name_q_norm.lower() not in str(obj.get("name") or "").lower():
+            return False
+        if timestamp_q_norm and timestamp_q_norm.lower() not in str(obj.get("timestamp") or "").lower():
+            return False
+        if changed_by_q_norm and changed_by_q_norm.lower() not in str(obj.get("lastChangedBy") or "").lower():
+            return False
+        return True
+
+    def object_sort_value(obj: dict, key: str):
+        if key == "timestamp":
+            text = str(obj.get("timestamp") or "")
+            parsed = datetime.fromisoformat(text.replace(" UTC", "+00:00")) if text and ("-" in text) else None
+            return parsed or datetime.min.replace(tzinfo=timezone.utc)
+        if key == "lastchangedby":
+            return str(obj.get("lastChangedBy") or "").lower()
+        if key == "lastseen":
+            return str(obj.get("lastSeen") or "")
+        if key == "hash":
+            return str(obj.get("hash") or "")
+        return str(obj.get("name") or "").lower()
+
+    with SessionLocal() as db:
+        base_filters = [
+            CachedObject.environment == environment,
+            CachedObject.object_type == object_type,
+        ]
+
+        # Searching must include table columns that are derived from cached JSON
+        # metadata, such as Timestamp and Last Changed By. For normal browsing we
+        # keep paging in SQL. When q is present, we scan this object type once,
+        # compute metadata columns, filter, sort and then page the matched result.
+        if q_norm or name_q_norm or timestamp_q_norm or changed_by_q_norm:
+            all_rows = list(
+                db.execute(
+                    select(CachedObject)
+                    .where(*base_filters)
+                    .order_by(CachedObject.object_name.asc(), CachedObject.id.asc())
+                ).scalars().all()
+            )
+            all_objects = [row_to_object(row) for row in all_rows]
+            matched = [obj for obj in all_objects if object_matches_field_filters(obj)]
+            reverse = sort_dir == "desc"
+            matched.sort(key=lambda obj: (object_sort_value(obj, sort_key), str(obj.get("name") or "").lower()), reverse=reverse)
+            total = len(matched)
+            objects = matched[safe_offset:safe_offset + safe_limit]
+        else:
+            total = db.execute(select(func.count()).select_from(CachedObject).where(*base_filters)).scalar_one()
+
+            order_col = CachedObject.object_name
+            if sort_key == "lastseen":
+                order_col = CachedObject.last_seen
+            elif sort_key == "hash":
+                order_col = CachedObject.object_hash
+            # Timestamp / Last Changed By are derived from JSON, so keep DB sort by
+            # name for stable paging unless a query is active. The browser still
+            # sorts the visible page for these columns.
+            order_expr = order_col.desc() if sort_dir == "desc" else order_col.asc()
+
+            stmt = (
+                select(CachedObject)
+                .where(*base_filters)
+                .order_by(order_expr, CachedObject.id.asc())
+                .offset(safe_offset)
+                .limit(safe_limit)
+            )
+            rows = list(db.execute(stmt).scalars().all())
+            objects = [row_to_object(row) for row in rows]
     return {
         "environment": environment,
         "object_type": object_type,

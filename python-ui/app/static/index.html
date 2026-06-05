@@ -85,7 +85,10 @@
       <div class="toolbar">
         <div class="row"><strong id="tableTitle">Forms</strong><span id="summary" class="summary"></span></div>
         <div class="row">
-          <input id="searchText" placeholder="Search source..." oninput="onSearchInput()">
+          <input id="nameFilter" placeholder="Name..." oninput="onSearchInput()">
+          <input id="timestampFilter" placeholder="Timestamp..." oninput="onSearchInput()">
+          <input id="changedByFilter" placeholder="Last Changed By..." oninput="onSearchInput()">
+          <button class="ghost" onclick="clearFilters()">Clear Filters</button>
           <button onclick="compareSelected()" class="primary">Compare Selected</button>
           <button onclick="startMigration()" class="primary">Migrate Selected</button>
           <button onclick="startDownload()">Download...</button>
@@ -163,7 +166,7 @@
 const TYPE_LABEL={form:'Forms',active_link:'Active Links',filter:'Filters',escalation:'Escalations',menu:'Menus',active_link_guide:'Active Link Guides',filter_guide:'Filter Guides',packing_list:'Packing Lists',application:'Applications',image:'Images'};
 const TYPE_TO_EXPORT={form:1,active_link:2,filter:3,escalation:4,menu:5,active_link_guide:6,filter_guide:6,packing_list:6,application:6,image:7};
 const TYPES=['form','active_link','filter','menu','escalation','active_link_guide','filter_guide','packing_list','application','image'];
-const state={envs:[],scope:{},sync:{},cache:{},serverCache:{},sessions:JSON.parse(sessionStorage.getItem('hlx.sessions')||'{}'),source:sessionStorage.getItem('hlx.sourceEnv')||'',target:sessionStorage.getItem('hlx.targetEnv')||'',type:'form',mode:'browse',objects:[],compare:null,selected:[],statusFilter:'',sortKey:'name',sortDir:'asc',pageSize:100,offset:0,total:0,loadingObjects:false,searchTimer:null};
+const state={envs:[],scope:{},sync:{},cache:{},serverCache:{},sessions:JSON.parse(sessionStorage.getItem('hlx.sessions')||'{}'),source:sessionStorage.getItem('hlx.sourceEnv')||'',target:sessionStorage.getItem('hlx.targetEnv')||'',type:'form',mode:'browse',objects:[],compare:null,selected:[],statusFilter:'',sortKey:'name',sortDir:'asc',pageSize:100,offset:0,total:0,loadingObjects:false,searchTimer:null,filters:{name:'',timestamp:'',changedBy:''}};
 let dialogResolver=null;
 let busyDepth=0;
 function beginBusy(title='Working...', detail='Please wait.'){
@@ -299,9 +302,34 @@ The cache will update in the background.`);
     endBusy();
   }
 }
+function readFilters(){
+  state.filters={
+    name:(document.getElementById('nameFilter')?.value||''),
+    timestamp:(document.getElementById('timestampFilter')?.value||''),
+    changedBy:(document.getElementById('changedByFilter')?.value||'')
+  };
+}
+function clearFilters(){
+  if(document.getElementById('nameFilter'))nameFilter.value='';
+  if(document.getElementById('timestampFilter'))timestampFilter.value='';
+  if(document.getElementById('changedByFilter'))changedByFilter.value='';
+  readFilters();
+  state.offset=0;
+  loadSourceObjects().catch(e=>setStatus(e.message));
+}
 function onSearchInput(){
+  readFilters();
   clearTimeout(state.searchTimer);
   state.searchTimer=setTimeout(()=>{state.offset=0;loadSourceObjects().catch(e=>setStatus(e.message));},250);
+}
+function rowMatchesFilters(o){
+  const f=state.filters||{};
+  const name=(f.name||'').toLowerCase();
+  const ts=(f.timestamp||'').toLowerCase();
+  const by=(f.changedBy||'').toLowerCase();
+  return (!name || String(o.name||'').toLowerCase().includes(name))
+    && (!ts || String(o.timestamp||'').toLowerCase().includes(ts))
+    && (!by || String(o.lastChangedBy||'').toLowerCase().includes(by));
 }
 async function loadSourceObjects(){
   savePair();
@@ -312,10 +340,13 @@ async function loadSourceObjects(){
   state.loadingObjects=true;
   renderPager();
   setStatus(`Loading ${TYPE_LABEL[state.type]} from ${state.source.toUpperCase()}...`);
-  const q=encodeURIComponent(searchText.value||'');
+  readFilters();
+  const nameQ=encodeURIComponent(state.filters.name||'');
+  const timestampQ=encodeURIComponent(state.filters.timestamp||'');
+  const changedByQ=encodeURIComponent(state.filters.changedBy||'');
   const sort=encodeURIComponent(state.sortKey||'name');
   const dir=encodeURIComponent(state.sortDir||'asc');
-  const r=await api(`/api/objects/${state.type}?environment=${encodeURIComponent(state.source)}&q=${q}&limit=${state.pageSize}&offset=${state.offset}&sort=${sort}&direction=${dir}`);
+  const r=await api(`/api/objects/${state.type}?environment=${encodeURIComponent(state.source)}&name_q=${nameQ}&timestamp_q=${timestampQ}&changed_by_q=${changedByQ}&limit=${state.pageSize}&offset=${state.offset}&sort=${sort}&direction=${dir}`);
   state.objects=r.objects||[];
   state.total=r.total||0;
   state.offset=r.offset||0;
@@ -400,13 +431,14 @@ function setSort(key){
   else renderRows();
 }
 function rowsForRender(){
-  const q=(searchText.value||'').toLowerCase();
+  readFilters();
   let rows;
   if(state.mode==='compare'&&state.compare){
     summary.innerHTML=Object.entries(state.compare.summary||{}).filter(([k,v])=>Number(v)>0).map(([k,v])=>`<span onclick="setStatusFilter('${k}')" class="pill status-badge ${statusBadgeClass(k)} ${state.statusFilter===k?'filter-active':''}"><strong>${v}</strong> ${k}</span>`).join('');
-    rows=(state.compare.objects||[]).filter(o=>(!q||o.name.toLowerCase().includes(q))&&(!state.statusFilter||o.status===state.statusFilter));
+    rows=(state.compare.objects||[]).filter(o=>rowMatchesFilters(o)&&(!state.statusFilter||o.status===state.statusFilter));
   } else {
     summary.innerHTML=`<span class="pill"><strong>${state.total||0}</strong> source objects</span>`;
+    // Browse mode is filtered server-side across separate Name, Timestamp and Last Changed By fields.
     rows=(state.objects||[]).map(o=>({...o,status:'not_compared'}));
   }
   return applySort(rows);
