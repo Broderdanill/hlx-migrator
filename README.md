@@ -1,214 +1,467 @@
 # HLX Migrator
 
-HLX Migrator är en första körbar grund för ett ARAPI-baserat verktyg som jämför metadata/workflow mellan BMC Helix / AR System-miljöer och exporterar valda objekt till `.def`.
+HLX Migrator is a modern web-based migration and comparison tool for BMC Helix / Remedy AR System environments.
 
-Projektet är byggt som två containers:
+The goal of the project is to provide functionality similar to the classic Remedy Migrator while offering a modern user experience, automated environment synchronization, object comparison, workflow migration, and data migration.
 
-| Container | Port | Ansvar |
-|---|---:|---|
-| `hlx-migrator-ui` | 8091 | Python/FastAPI, enkel GUI, cache, diff, transportlista |
-| `hlx-migrator-backend` | 8092 | Java ARAPI-service, login, metadatahämtning, `.def` export |
+The application is designed for developers, administrators, architects, and DevOps teams working with multiple AR System environments.
 
-Detta gör att GUI/backend-lagret kan bytas eller utvecklas utan att ARAPI-lagret behöver ändras.
+---
 
-## Varför två containers?
+# Features
 
-ARAPI-delen är Java/JVM-beroende och kräver BMC:s JAR-filer. GUI, cache och diffmotor är Python-baserade. Genom att separera dem kan du uppgradera BMC JAR-filer och JVM-flaggor utan att röra GUI-koden.
+## Workflow Discovery
 
-## ARAPI-stöd i denna version
+HLX Migrator automatically discovers and indexes workflow objects from configured AR System environments.
 
-Java-servicen använder `ARServerUser` och förväntar sig BMC Helix 26.1 JAR-filer:
+Supported object types:
 
-- `arapi261_build000.jar`
-- `arapiext261_build000.jar`
+* Forms
+* Active Links
+* Filters
+* Escalations
+* Menus
+* Active Link Guides
+* Filter Guides
+* Packing Lists
+* Applications
+* Images
 
-De ska ligga här:
+Object discovery respects configured scope rules.
+
+Example:
+
+```yaml
+scope:
+  include_form_prefixes:
+    - "HLX*"
+
+  exclude_form_prefixes: []
+```
+
+Only objects related to matching forms are indexed and displayed.
+
+---
+
+## Deep Metadata Cache
+
+At startup HLX Migrator can automatically:
+
+1. Connect to configured environments
+2. Authenticate using server-side credentials
+3. Read workflow metadata
+4. Build a local cache
+5. Load detailed object definitions
+
+The cache provides:
+
+* Faster browsing
+* Faster comparisons
+* Reduced AR API traffic
+* Improved UI responsiveness
+
+---
+
+## Environment Comparison
+
+Compare workflow between environments.
+
+Examples:
 
 ```text
-java-arapi-service/lib/arapi261_build000.jar
-java-arapi-service/lib/arapiext261_build000.jar
+UM -> UTB
+UTB -> PROD
+DEV -> TEST
 ```
 
-## Funktioner i version 0.1
+Comparison statuses:
 
-- Logga in mot flera miljöer.
-- Lista formulär.
-- Läsa formulär med fields och views.
-- Cachea formulärmetadata i SQLite.
-- Jämföra Forms mellan två miljöer.
-- Visa skillnader i enkel GUI.
-- Markera objekt för transportlista.
-- Exportera valda objekt via ARAPI `exportDefToFile`.
+| Status            | Meaning                   |
+| ----------------- | ------------------------- |
+| Equal             | Definitions are identical |
+| Different         | Definitions differ        |
+| Missing In Source | Exists only in target     |
+| Missing In Target | Exists only in source     |
 
-## Begränsningar i version 0.1
+Comparisons are based on object definitions and metadata, not only object names.
 
-- GUI är avsiktligt enkel HTML/JS för att ge en körbar start.
-- Workflow, Menus, Containers och Images har endpoints i Java-servicen men är ännu inte fullt integrerade i cache/diff-GUI.
-- Packing List-skapande och Deployment Management är nästa steg.
-- `.def` export använder ARAPI StructItemInfo. Om din JAR har annan konstruktor för `StructItemInfo` kan `createStructItemInfo` behöva justeras efter `javap`.
+---
 
-## Konfiguration
+## Workflow Migration
 
-Kopiera secrets-exemplet:
+Workflow objects can be migrated directly between environments.
+
+Supported operations:
+
+* DEF Export
+* DEF Import
+* Environment-to-environment migration
+
+Migration requires a user login against the target environment.
+
+This ensures proper auditing inside AR System.
+
+---
+
+## DEF Export
+
+Selected workflow objects can be exported as classic AR System DEF files.
+
+Supported exports:
+
+* Single object
+* Multiple objects
+* Related workflow objects
+
+The generated files use the AR System DEF format rather than ARXML.
+
+---
+
+## Data Export
+
+Form data can be exported directly from AR System.
+
+Supported formats:
+
+* CSV
+* JSON
+
+Export options:
+
+* Qualification
+* Maximum rows
+* Selected fields
+
+Example qualifications:
+
+```text
+'Status' = "Open"
+
+'Assigned Group' = "Service Desk"
+
+'Create Date' > $TIMESTAMP$
+```
+
+---
+
+## Data Migration
+
+Form data can be migrated between environments.
+
+Supported options:
+
+### Update Existing
+
+Update entries where Request ID already exists.
+
+### Skip Existing
+
+Ignore entries already present.
+
+### Create Duplicate
+
+Create new entries regardless of existing Request IDs.
+
+Migration options:
+
+* Qualification
+* Maximum rows
+* Conflict handling
+* Target environment
+
+---
+
+## User Login
+
+HLX Migrator uses two different authentication models.
+
+### Server Login
+
+Used for:
+
+* Startup synchronization
+* Cache refresh
+* Metadata indexing
+* Comparisons
+
+Credentials are stored in Kubernetes or Podman secrets.
+
+### User Login
+
+Used for:
+
+* Workflow migration
+* Data migration
+* Future write operations
+
+This provides proper audit tracking inside AR System.
+
+---
+
+## Synchronization
+
+Synchronization can run:
+
+* Automatically at startup
+* Manually from the UI
+
+Environment locks prevent concurrent operations against the same environment.
+
+Examples:
+
+```text
+Sync UM
+Migration UM
+```
+
+cannot run simultaneously.
+
+---
+
+## Activity Log
+
+The Activity Log provides a user-friendly operational log.
+
+Examples:
+
+* Environment login
+* Synchronization
+* Workflow migration
+* Data migration
+* Exports
+* Errors and warnings
+
+The log is intended for users rather than low-level server diagnostics.
+
+---
+
+# Architecture
+
+```text
+┌─────────────────────────┐
+│        Browser          │
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│      FastAPI UI         │
+│       Python API        │
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│   Java ARAPI Service    │
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│  BMC Helix AR System    │
+└─────────────────────────┘
+```
+
+---
+
+# Required BMC Libraries
+
+The Java service depends on proprietary BMC Helix / AR System libraries.
+
+These files are NOT included in the repository and must be supplied separately.
+
+Required files:
+
+```text
+arapi261_build000.jar
+arapiext261_build000.jar
+arlogger-26.1.00-SNAPSHOT.jar
+```
+
+Place them in:
+
+```text
+java-arapi-service/lib/
+```
+
+before building the backend container.
+
+Example:
+
+```text
+java-arapi-service/
+└── lib/
+    ├── arapi261_build000.jar
+    ├── arapiext261_build000.jar
+    └── arlogger-26.1.00-SNAPSHOT.jar
+```
+
+The exact filenames may vary depending on the Helix version being used.
+
+---
+
+# Build
+
+## Using Buildah
 
 ```bash
-cp python-ui/config/secrets.yaml.example python-ui/config/secrets.yaml
+./scripts/buildah-build.sh
 ```
 
-Redigera:
+Example:
+
+```bash
+buildah bud \
+  -t localhost/hlx-migrator-backend:latest \
+  -f java-arapi-service/Containerfile \
+  java-arapi-service
+
+buildah bud \
+  -t localhost/hlx-migrator-ui:latest \
+  -f python-ui/Containerfile \
+  python-ui
+```
+
+---
+
+# Deployment
+
+## Start
+
+```bash
+podman play kube kube/podman-play-kube.yaml
+```
+
+## Stop
+
+```bash
+podman kube down kube/podman-play-kube.yaml
+```
+
+---
+
+# Configuration
+
+## environments.yaml
+
+Example:
 
 ```yaml
 environments:
   um:
-    name: um
-    host: arserver-um.example.com
-    port: 0
+    host: ars-arserver
+    port: 46262
     rpc: 390620
+
   utb:
-    name: utb
-    host: arserver-utb.example.com
-    port: 0
+    host: ars-arserver
+    port: 46262
     rpc: 390620
+
+scope:
+  include_form_prefixes:
+    - "HLX*"
+
+  exclude_form_prefixes: []
+
+sync:
+  auto_start: true
+
+  include_global: false
+
+  object_types:
+    forms: true
+    form_details: true
+    fields: true
+    views: true
+
+    active_links: true
+    filters: true
+    escalations: true
+
+    menus: true
+
+    containers: true
+    images: true
 ```
 
-Credentials ligger separat:
+---
+
+## secrets.yaml
+
+Example:
 
 ```yaml
 credentials:
   um:
     username: Demo
-    password: secret
+    password: P@ssw0rd
+
   utb:
     username: Demo
-    password: secret
+    password: P@ssw0rd
 ```
 
-## Bygg
+Never commit secrets.yaml to source control.
 
-Från projektroten:
+---
 
-```bash
-./build.sh
-```
+# Environment Variables
 
-Det bygger:
-
-```bash
-hlx-migrator-backend:0.1.0
-hlx-migrator-ui:0.1.0
-```
-
-## Kör med podman play kube
-
-```bash
-./run.sh
-```
-
-Öppna:
+## Backend
 
 ```text
-http://localhost:8091
+HLX_CONFIG_DIR
+HLX_ARAPI_LIB_DIR
+ARAPI_SERVICE_PORT
+EXPORT_DIR
+LOG_LEVEL
 ```
 
-## Stoppa
-
-```bash
-podman pod stop hlx-migrator
-podman pod rm hlx-migrator
-```
-
-## Lokal utveckling utan container
-
-Starta Java-servicen:
-
-```bash
-cd java-arapi-service
-mvn package
-ARAPI_SERVICE_PORT=8092 java -jar target/hlx-migrator-arapi-service-0.1.0.jar
-```
-
-Starta Python UI:
-
-```bash
-cd python-ui
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-APP_PORT=8091 ARAPI_BASE_URL=http://localhost:8092 uvicorn app.main:app --host 0.0.0.0 --port 8091
-```
-
-## Rekommenderade nästa steg
-
-1. Lägg till workflow-cache för Active Links, Filters och Escalations.
-2. Lägg till Menus, Containers, Images i diffmotorn.
-3. Bygg riktig Packing List-funktion via `createContainer` / `setContainer`.
-4. Lägg till mer avancerad GUI med Vue eller React.
-5. Lägg till incremental sync med `getObjectChangeTimes`.
-6. Lägg till Deployment Management-flöde med separata bekräftelsesteg.
-
-## Säkerhet
-
-- Ingen import/deploy görs i denna version.
-- Export är icke-destruktivt.
-- Credentials ska ligga i secret/config-volume, inte byggas in i image.
-- Endast `hlx-migrator-backend` behöver nå AR Server.
-
-## Podman play kube som primär driftmodell
-
-Den rekommenderade körningen är en pod med två containers:
+## UI
 
 ```text
-hlx-migrator
-├── hlx-migrator-ui       port 8091
-└── hlx-migrator-backend  port 8092
+HLX_ARAPI_BASE_URL
+HLX_CONFIG_DIR
+HLX_DATA_DIR
+HLX_AUTO_SERVER_SYNC
+LOG_LEVEL
 ```
 
-Båda containers delar samma pod-nätverk. UI-containern når ARAPI-containern via:
+Supported log levels:
 
 ```text
-http://localhost:8092
+TRACE
+DEBUG
+INFO
+WARN
+ERROR
 ```
 
-Start:
+---
 
-```bash
-./run-play-kube.sh
-```
+# Security Recommendations
 
-Loggar:
+* Use browser login for all write operations.
+* Store credentials in Kubernetes secrets.
+* Limit access to production environments.
+* Audit all workflow and data migrations.
+* Never commit AR System credentials to source control.
 
-```bash
-./logs.sh
-```
+---
 
-Stoppa och ta bort podden:
+# Contributing
 
-```bash
-./stop-play-kube.sh
-```
+This project is intended for internal use.
 
-Kontrollera podden:
+Contributions should follow:
 
-```bash
-podman pod ps
-podman ps --pod
-```
+* Consistent coding style
+* English UI text
+* Proper logging
+* Backwards-compatible configuration changes
 
-UI finns på:
+---
 
-```text
-http://localhost:8091
-```
+# License
 
-ARAPI-servicens healthcheck finns på:
+Internal project.
 
-```text
-http://localhost:8092/health
-```
-
-## 0.8.7 notes
-
-- Side-by-side JSON diff is highlighted with one shared scrollbar.
-- Source/Target JSON standalone tabs were removed.
-- DEF download now exports classic AR System DEF using ARAPI non-XML format.
-- Each row has a Copy Name action.
+Copyright © HLX.
