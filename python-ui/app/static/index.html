@@ -271,7 +271,15 @@ async function refreshAll(){try{const e=await api('/api/environments');state.env
 function renderSelects(){for(const el of [sourceEnv,targetEnv]){const sel=el.id==='sourceEnv'?state.source:state.target;el.innerHTML=state.envs.map(e=>`<option ${e===sel?'selected':''}>${e.toUpperCase()}</option>`).join('')}}
 function savePair(){state.source=sourceEnv.value.toLowerCase();state.target=targetEnv.value.toLowerCase();sessionStorage.setItem('hlx.sourceEnv',state.source);sessionStorage.setItem('hlx.targetEnv',state.target);renderHeader()}
 function renderScope(){if(!document.getElementById('scopeBox'))return;scopeBox.innerHTML=`<span class="pill">Include ${(state.scope.include_form_prefixes||[]).join(', ')||'-'}</span><span class="pill">Exclude ${(state.scope.exclude_form_prefixes||[]).join(', ')||'-'}</span>`}
-function renderTree(){typeTree.innerHTML=TYPES.map(t=>{const c=state.cache[state.source]?.[t]?.count||0;return `<button id="nav_${t}" class="${state.type===t?'active':''}" onclick="selectType('${t}')"><span>${TYPE_LABEL[t]}</span><span class="badge">${c}</span></button>`}).join('')}
+function renderTree(){
+  const pairKey=`${String(state.source||'').toLowerCase()}->${String(state.target||'').toLowerCase()}`;
+  const diffSummary=state.serverCache?.differences?.[pairKey]?.summary||{};
+  typeTree.innerHTML=TYPES.map(t=>{
+    let c=state.cache[state.source]?.[t]?.count||0;
+    if(state.mode==='differences') c=diffSummary[t]?.total||0;
+    return `<button id="nav_${t}" class="${state.type===t?'active':''}" onclick="selectType('${t}')"><span>${TYPE_LABEL[t]}</span><span class="badge" title="${c}">${compactCount(c)}</span></button>`
+  }).join('')
+}
 function renderCards(){envCards.innerHTML=state.envs.map(env=>{const s=state.serverCache.environments?.[env]||{};const lock=state.serverCache.locks?.[env];const counts=state.cache[env]||{};const rows=Object.entries(counts).sort().map(([t,v])=>`<div class="metric"><span>${TYPE_LABEL[t]||t}</span><span title="${v.count}">${compactCount(v.count)} <span class="muted">${fmtDate(v.lastSeen)}</span></span></div>`).join('')||'<div class="muted">No cache yet</div>';const lockHtml=lock?`<div class="pill warn" style="margin:7px 0">Locked: ${html(lock.operation)} by ${html(lock.owner)} since ${fmtDate(lock.startedAt)}</div>`:'';return `<div class="env-card"><div class="toolbar"><h3>${env.toUpperCase()} <span class="${s.status==='ok'?'ok':s.status==='error'?'bad':'warn'}">${s.status||'pending'}</span></h3><button onclick="serverSyncEnv('${env}')" ${lock?'disabled title="Environment is locked"':''}>Server Sync</button></div>${lockHtml}<div class="small muted">Server: ${s.serverVersion||'-'}<br>User: ${s.user||'-'}<br>Last sync: ${fmtDate(s.finishedAt)}<br>Mode: ${s.lastSyncMode||'-'}</div><div class="small" style="margin:7px 0">Scope: ${(s.scope?.include_form_prefixes||state.scope.include_form_prefixes||[]).join(', ')||'-'}</div>${rows}</div>`}).join('')}
 function renderJobs(){const jobsData=state.serverCache.jobs||[];const htmlRows=jobsData.slice(0,100).map(j=>`<div class="log-row"><span>${fmtDate(j.time)}</span><span>${j.environment}</span><span class="${j.status==='ok'?'ok':j.status==='error'?'bad':'warn'}">${j.status}</span><span>${j.objectType}: ${j.message} ${j.counts?html(JSON.stringify(j.counts)):''}</span></div>`).join('');jobsMenu.innerHTML=htmlRows;jobs.innerHTML=htmlRows||'<div class="muted">No events yet</div>'}
 function renderLogin(){loginGrid.innerHTML=state.envs.map(env=>{const id=safeId(env),s=state.sessions[env];const valid=s&&s.valid!==false;const label=s?(valid?'logged in':'session expired'):'not logged in';const cls=s?(valid?'ok':'warn'):'bad';return `<div class="login-env"><div class="toolbar"><h3>${env.toUpperCase()} <span class="${cls}">${label}</span></h3></div>${s&&s.valid===false?`<div class="small warn">Session is stale. Log in again before migration.</div>`:''}<div class="row"><label>User<br><input id="u_${id}" value="${s?.user||''}"></label><label>Password<br><input id="p_${id}" type="password"></label><label>Auth<br><input id="a_${id}"></label><button onclick="loginEnv('${env}')" class="primary">Log in</button><button onclick="logoutEnv('${env}')" class="danger">Log out</button></div></div>`}).join('')}
@@ -385,6 +393,7 @@ function setViewMode(mode){
   state.mode=mode==='differences'?'differences':'browse';
   state.viewMode=state.mode;
   renderHeader();
+  renderTree();
   renderSelected();
   loadCurrentObjects().catch(e=>setStatus(e.message));
 }
@@ -406,6 +415,7 @@ async function loadDifferenceObjects(){
   state.loadingObjects=false;
   renderRows();
   renderPager();
+  renderTree();
   renderHeader();
   setStatus(`${state.total} difference(s) shown for ${TYPE_LABEL[state.type]} ${state.source.toUpperCase()} ↔ ${state.target.toUpperCase()}`);
 }
@@ -450,6 +460,7 @@ function renderPager(){
 }
 async function compareSelected(){
   if(!state.selected.length){await notifyDialog('Nothing selected','Select at least one object from the source environment.');return;}
+  const wasDifferences=state.mode==='differences';
   const names=state.selected.filter(x=>x.objectType===state.type).map(x=>x.name);
   if(!names.length){await notifyDialog('Nothing selected',`Select at least one object of type ${TYPE_LABEL[state.type]}.`);return;}
   beginBusy('Comparing selected objects', `${names.length} ${TYPE_LABEL[state.type]} object(s)
@@ -458,10 +469,21 @@ ${state.source.toUpperCase()} → ${state.target.toUpperCase()}`);
   try{
     state.compare=await api('/api/compare/selected',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:state.source,target:state.target,object_type:state.type,names})});
     updateBusy('Rendering comparison result...');
-    state.mode='compare';
-    renderRows();
-    renderHeader();
-    setStatus('Compare completed');
+    if(wasDifferences){
+      const comparedByName=Object.fromEntries((state.compare.objects||[]).map(o=>[o.name,o]));
+      state.objects=(state.objects||[]).map(o=> comparedByName[o.name] ? {...o,...comparedByName[o.name],objectType:state.type} : o);
+      renderRows();
+      renderHeader();
+      setStatus('Compare completed. Staying in Differences view.');
+      if((state.compare.objects||[]).length===1){
+        showDetail({...state.compare.objects[0],objectType:state.type});
+      }
+    } else {
+      state.mode='compare';
+      renderRows();
+      renderHeader();
+      setStatus('Compare completed');
+    }
   }finally{
     endBusy();
   }
@@ -873,10 +895,12 @@ async function migrateDifferenceDirection(reverse=false){
     const r=await api('/api/migrate/def',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_environment:src,target_environment:dst,source_session_id:sourceSid||null,target_session_id:targetSid||null,file_name:`migration-${Date.now()}.def`,related:true,items})});
     updateBusy(`Migration completed. Refreshing ${dst.toUpperCase()} cache status...`);
     try{await api(`/api/server-cache/refresh/${dst}`,{method:'POST'});}catch(syncErr){setStatus(`Migration completed, but target refresh could not start: ${syncErr.message}`);}
+    state.selected=[];
     await refreshAll();
     await loadDifferenceObjects();
+    renderTree();
     endBusy();
-    await notifyDialog('Migration completed',`Migration API completed: ${r.items} object(s).\nExport file: ${r.file||'-'}\nFile size: ${r.fileSizeBytes||'-'} bytes`);
+    await notifyDialog('Migration completed',`Migration API completed: ${r.items} object(s).\nExport file: ${r.file||'-'}\nFile size: ${r.fileSizeBytes||'-'} bytes\n\nDifferences view has been refreshed.`);
   }catch(err){endBusy();await notifyDialog('Migration failed',err.message);}
 }
 async function startMigration(){

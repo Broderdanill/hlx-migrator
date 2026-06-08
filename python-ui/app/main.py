@@ -488,7 +488,7 @@ async def health():
         arapi = await ArApiClient().health()
     except Exception as e:
         arapi = {"status": "error", "message": str(e)}
-    return {"status": "ok", "app": "hlx-migrator-ui", "version": "0.9.8", "logLevel": LOG_LEVEL, "arapi": arapi}
+    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.3", "logLevel": LOG_LEVEL, "arapi": arapi}
 
 
 @app.get("/api/environments")
@@ -1202,6 +1202,12 @@ async def migrate_def(req: MigrateReq):
             "items": verification,
         }
         add_job(req.target_environment, "migrate", "ok", f"Migration completed and verified: {equal_to_source_count}/{len(verification)} target object(s) equal source", {"items": len(req.items), "changed": changed_count, "unchanged": unchanged_count, "equalToSource": equal_to_source_count, "file": result.get("file"), "sourceSessionMode": source_mode, "targetSessionMode": target_mode})
+        try:
+            build_difference_cache(req.source_environment, req.target_environment)
+            build_difference_cache(req.target_environment, req.source_environment)
+            add_job(req.target_environment, "differences", "ok", "Difference index refreshed after migration", {"source": req.source_environment, "target": req.target_environment})
+        except Exception as diff_error:
+            add_job(req.target_environment, "differences", "error", f"Failed to refresh difference index after migration: {diff_error}")
         return result
     except HTTPException:
         raise
