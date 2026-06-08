@@ -893,8 +893,7 @@ async function migrateDifferenceDirection(reverse=false){
   beginBusy(reverse?'Backporting workflow definitions':'Promoting workflow definitions',`${items.length} selected object(s)\n${src.toUpperCase()} → ${dst.toUpperCase()}`);
   try{
     const r=await api('/api/migrate/def',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_environment:src,target_environment:dst,source_session_id:sourceSid||null,target_session_id:targetSid||null,file_name:`migration-${Date.now()}.def`,related:true,items})});
-    updateBusy(`Migration completed. Refreshing ${dst.toUpperCase()} cache status...`);
-    try{await api(`/api/server-cache/refresh/${dst}`,{method:'POST'});}catch(syncErr){setStatus(`Migration completed, but target refresh could not start: ${syncErr.message}`);}
+    updateBusy(`Migration completed. Refreshing affected objects and recalculating differences...`);
     state.selected=[];
     await refreshAll();
     await loadDifferenceObjects();

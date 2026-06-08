@@ -488,7 +488,7 @@ async def health():
         arapi = await ArApiClient().health()
     except Exception as e:
         arapi = {"status": "error", "message": str(e)}
-    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.3", "logLevel": LOG_LEVEL, "arapi": arapi}
+    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.4", "logLevel": LOG_LEVEL, "arapi": arapi}
 
 
 @app.get("/api/environments")
@@ -1064,6 +1064,20 @@ async def _fetch_detail_hash(session_id: str, environment: str, object_type: str
         return {"exists": False, "hash": None, "error": str(e), "timestamp": "", "lastChangedBy": ""}
 
 
+def _destination_missing_from_diff_status(item: dict) -> bool:
+    """Return True when the Difference-view status already tells us the
+    migration destination is missing the object.
+
+    For Promote (source -> target), missing_in_target means the destination is
+    missing. For Backport (target -> source), missing_in_source means the
+    destination is missing. Both cases are passed through /api/migrate/def with
+    the original Difference-view status. Skipping the pre-read avoids expected
+    ARERR 303 log noise before the import has had a chance to create the object.
+    """
+    status = str(item.get("status") or "").strip().lower()
+    return status in {"missing_in_source", "missing_in_target"}
+
+
 
 @app.post("/api/export/data")
 async def export_data(req: DataExportReq):
@@ -1146,7 +1160,16 @@ async def migrate_def(req: MigrateReq):
             if not name:
                 continue
             key = f"{object_type}::{name}"
-            before_by_key[key] = await _fetch_detail_hash(target_session_id, req.target_environment, object_type, name)
+            if _destination_missing_from_diff_status(item):
+                before_by_key[key] = {
+                    "exists": False,
+                    "hash": None,
+                    "timestamp": "",
+                    "lastChangedBy": "",
+                    "error": "Skipped destination pre-check because the Difference view already marked the object as missing in the destination.",
+                }
+            else:
+                before_by_key[key] = await _fetch_detail_hash(target_session_id, req.target_environment, object_type, name)
             source_by_key[key] = await _fetch_detail_hash(source_session_id, req.source_environment, object_type, name)
 
         add_job(req.target_environment, "migrate", "running", f"Importing {len(req.items)} selected object(s) from {req.source_environment} to {req.target_environment} ({source_mode} → {target_mode})", {"items": len(req.items)})
@@ -1158,6 +1181,8 @@ async def migrate_def(req: MigrateReq):
         changed_count = 0
         equal_to_source_count = 0
         unchanged_count = 0
+        refreshed_count = 0
+        refresh_errors = 0
         for item in req.items:
             object_type = item.get("objectType") or item.get("object_type") or "form"
             name = item.get("name") or item.get("objectName")
@@ -1169,6 +1194,9 @@ async def migrate_def(req: MigrateReq):
             after = await _fetch_detail_hash(target_session_id, req.target_environment, object_type, name)
             if after.get("exists") and after.get("detail"):
                 upsert_cached_object(req.target_environment, object_type, name, after["detail"])
+                refreshed_count += 1
+            else:
+                refresh_errors += 1
             changed = before.get("hash") != after.get("hash")
             equal_to_source = bool(source.get("hash") and after.get("hash") == source.get("hash"))
             if changed:
@@ -1202,10 +1230,11 @@ async def migrate_def(req: MigrateReq):
             "items": verification,
         }
         add_job(req.target_environment, "migrate", "ok", f"Migration completed and verified: {equal_to_source_count}/{len(verification)} target object(s) equal source", {"items": len(req.items), "changed": changed_count, "unchanged": unchanged_count, "equalToSource": equal_to_source_count, "file": result.get("file"), "sourceSessionMode": source_mode, "targetSessionMode": target_mode})
+        add_job(req.target_environment, "targeted-refresh", "ok" if refresh_errors == 0 else "warn", f"Targeted cache refresh completed for {refreshed_count}/{len(verification)} object(s)", {"refreshed": refreshed_count, "errors": refresh_errors, "items": len(verification)})
         try:
             build_difference_cache(req.source_environment, req.target_environment)
             build_difference_cache(req.target_environment, req.source_environment)
-            add_job(req.target_environment, "differences", "ok", "Difference index refreshed after migration", {"source": req.source_environment, "target": req.target_environment})
+            add_job(req.target_environment, "differences", "ok", "Difference index recalculated after targeted refresh", {"source": req.source_environment, "target": req.target_environment, "refreshed": refreshed_count, "refreshErrors": refresh_errors})
         except Exception as diff_error:
             add_job(req.target_environment, "differences", "error", f"Failed to refresh difference index after migration: {diff_error}")
         return result
