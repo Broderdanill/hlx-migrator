@@ -9,6 +9,29 @@ class ArApiClient:
     def _headers(self, session_id: str | None = None) -> dict:
         return {"X-HLX-Session": session_id} if session_id else {}
 
+    def _clean_export_items(self, items: list[dict]) -> list[dict]:
+        """Keep only fields accepted by the Java ARAPI ExportItem model.
+
+        Difference-view rows contain UI metadata such as status, timestamp,
+        lastChangedBy and diff details. Those must not be sent to the ARAPI
+        service because it only expects name/objectType/type.
+        """
+        cleaned = []
+        for item in items or []:
+            if not isinstance(item, dict):
+                continue
+            name = item.get("name") or item.get("objectName") or item.get("object_name")
+            object_type = item.get("objectType") or item.get("object_type") or item.get("typeName")
+            browser_type = item.get("type", 0)
+            if not name:
+                continue
+            cleaned.append({
+                "name": name,
+                "objectType": object_type or "form",
+                "type": browser_type if isinstance(browser_type, int) else 0,
+            })
+        return cleaned
+
     def _raise_for_status_with_body(self, r: httpx.Response) -> None:
         if r.status_code < 400:
             return
@@ -152,7 +175,7 @@ class ArApiClient:
             r = await client.post(
                 f"{self.base_url}/export/def",
                 headers=self._headers(session_id),
-                json={"items": items, "fileName": file_name, "related": related},
+                json={"items": self._clean_export_items(items), "fileName": file_name, "related": related},
             )
             self._raise_for_status_with_body(r)
             return r.json()
@@ -163,7 +186,7 @@ class ArApiClient:
                 json={
                     "sourceSessionId": source_session_id,
                     "targetSessionId": target_session_id,
-                    "items": items,
+                    "items": self._clean_export_items(items),
                     "fileName": file_name,
                     "related": related,
                 },

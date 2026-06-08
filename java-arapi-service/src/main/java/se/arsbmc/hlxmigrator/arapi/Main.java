@@ -2,6 +2,7 @@ package se.arsbmc.hlxmigrator.arapi;
 
 import com.bmc.arsys.api.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
@@ -968,6 +969,7 @@ public class Main {
     }
 
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class DataExportRequest {
         public String form;
         public String qualification = "";
@@ -977,6 +979,7 @@ public class Main {
         public String fileName;
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class DataMigrateRequest {
         public String sourceSessionId;
         public String targetSessionId;
@@ -986,12 +989,14 @@ public class Main {
         public String mode = "update";
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ExportRequest {
         public List<ExportItem> items = new ArrayList<>();
         public boolean related = true;
         public String fileName;
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class MigrateRequest {
         public String sourceSessionId;
         public String targetSessionId;
@@ -1000,6 +1005,7 @@ public class Main {
         public String fileName;
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ExportItem {
         public int type;
         public String objectType;
