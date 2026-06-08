@@ -21,7 +21,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.0.7")
+app = FastAPI(title="HLX Migrator", version="1.1.0")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -36,6 +36,8 @@ SERVER_CACHE_STATUS = {
 SERVER_SESSIONS: dict[str, str] = {}
 ENV_LOCKS: dict[str, dict] = {}
 LOCK_GUARD = asyncio.Lock()
+DIFFERENCE_CACHE: dict[str, dict] = {}
+DIFF_OBJECT_TYPES = ["form", "active_link", "filter", "menu", "escalation", "active_link_guide", "filter_guide", "packing_list", "application", "image"]
 
 
 def _lock_public() -> dict:
@@ -301,8 +303,53 @@ def public_server_cache_status() -> dict:
         "environments": envs,
         "jobs": list((SERVER_CACHE_STATUS.get("jobs") or [])[:200]),
         "locks": _lock_public(),
+        "differences": DIFFERENCE_CACHE,
     }
 
+
+
+
+def _cache_key(source: str, target: str) -> str:
+    return f"{source.lower()}->{target.lower()}"
+
+
+def build_difference_cache(source: str, target: str) -> dict:
+    """Build an in-memory difference index for one environment pair.
+
+    This is intentionally based on the same compare engine used by the classic
+    compare flow, but it keeps only the user-facing summary/list needed by the
+    Differences view. Equal rows are not stored in the object list.
+    """
+    pair_key = _cache_key(source, target)
+    pair = {
+        "source": source,
+        "target": target,
+        "builtAt": now_iso(),
+        "objectTypes": {},
+        "summary": {},
+    }
+    for object_type in DIFF_OBJECT_TYPES:
+        try:
+            diff = compare_environments(source, target, object_type)
+            objects = [o for o in diff.get("objects", []) if o.get("status") != "equal"]
+            summary = dict(diff.get("summary") or {})
+            pair["objectTypes"][object_type] = {
+                "summary": summary,
+                "objects": objects,
+                "total": len(objects),
+            }
+            pair["summary"][object_type] = {
+                "different": int(summary.get("different", 0)),
+                "missing_in_source": int(summary.get("missing_in_source", 0)),
+                "missing_in_target": int(summary.get("missing_in_target", 0)),
+                "total": len(objects),
+            }
+        except Exception as e:
+            pair["objectTypes"][object_type] = {"summary": {}, "objects": [], "total": 0, "error": str(e)}
+            pair["summary"][object_type] = {"different": 0, "missing_in_source": 0, "missing_in_target": 0, "total": 0, "error": str(e)}
+    DIFFERENCE_CACHE[pair_key] = pair
+    add_job(source, "differences", "ok", f"Difference index built for {source.upper()} → {target.upper()}", {k: v.get("total", 0) for k, v in pair["summary"].items()})
+    return pair
 
 @app.on_event("startup")
 async def startup():
@@ -323,6 +370,12 @@ async def server_cache_refresh_all():
     add_job("all", "server-sync", "running", "Starting server sync for all environments")
     for env in config_store.environments():
         await server_cache_refresh_environment(env, set_global_running=False)
+    envs = list(config_store.environments())
+    if len(envs) >= 2:
+        try:
+            build_difference_cache(envs[0], envs[1])
+        except Exception as e:
+            add_job("all", "differences", "error", f"Failed to build difference index: {e}")
     SERVER_CACHE_STATUS["running"] = False
     SERVER_CACHE_STATUS["finishedAt"] = now_iso()
     add_job("all", "server-sync", "ok", "Server sync completed for all environments")
@@ -400,6 +453,15 @@ async def server_cache_refresh_environment(env: str, set_global_running: bool = 
             add_job(env, "details", details.get("status", "ok"), "Deep metadata cache completed", detail_counts)
 
         env_status.update({"status": "ok", "finishedAt": now_iso()})
+        envs = list(config_store.environments())
+        if len(envs) >= 2:
+            source = envs[0]
+            target = envs[1]
+            if env in (source, target):
+                try:
+                    build_difference_cache(source, target)
+                except Exception as diff_error:
+                    add_job(env, "differences", "error", f"Failed to build difference index: {diff_error}")
     except Exception as e:
         env_status.update({"status": "error", "error": str(e), "finishedAt": now_iso()})
         add_job(env, "environment", "error", str(e))
@@ -859,6 +921,48 @@ def diff_object_type(object_type: str, source: str, target: str, source_session_
     src_ns = source if service_cache else cache_namespace(source, source_session_id)
     tgt_ns = target if service_cache else cache_namespace(target, target_session_id)
     return compare_environments(src_ns, tgt_ns, object_type)
+
+
+@app.get("/api/differences")
+def differences_api(
+    source: str,
+    target: str,
+    object_type: str = "form",
+    include_equal: bool = False,
+    status: str | None = None,
+):
+    allowed = set(DIFF_OBJECT_TYPES)
+    if object_type not in allowed:
+        raise HTTPException(status_code=400, detail=f"Unsupported object type: {object_type}")
+    if source not in config_store.environments() or target not in config_store.environments():
+        raise HTTPException(status_code=404, detail="Unknown source or target environment")
+
+    pair_key = _cache_key(source, target)
+    pair = DIFFERENCE_CACHE.get(pair_key)
+    if not pair or object_type not in (pair.get("objectTypes") or {}):
+        pair = build_difference_cache(source, target)
+
+    data = pair.get("objectTypes", {}).get(object_type, {"summary": {}, "objects": [], "total": 0})
+    objects = list(data.get("objects") or [])
+    if include_equal:
+        raw = compare_environments(source, target, object_type)
+        objects = list(raw.get("objects") or [])
+        data = {"summary": raw.get("summary") or {}, "objects": objects, "total": len(objects)}
+
+    if status:
+        wanted = {s.strip() for s in status.split(",") if s.strip()}
+        if wanted:
+            objects = [o for o in objects if o.get("status") in wanted]
+
+    return {
+        "source": source,
+        "target": target,
+        "object_type": object_type,
+        "builtAt": pair.get("builtAt"),
+        "summary": data.get("summary") or {},
+        "total": len(objects),
+        "objects": objects,
+    }
 
 
 @app.post("/api/export/def")
