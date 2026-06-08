@@ -21,7 +21,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.1.0")
+app = FastAPI(title="HLX Migrator", version="1.1.5")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -368,6 +368,7 @@ async def server_cache_refresh_all():
     SERVER_CACHE_STATUS["startedAt"] = now_iso()
     SERVER_CACHE_STATUS["finishedAt"] = None
     add_job("all", "server-sync", "running", "Starting server sync for all environments")
+    add_job("all", "server-sync", "running", "The UI remains available while metadata cache and differences are rebuilt")
     for env in config_store.environments():
         await server_cache_refresh_environment(env, set_global_running=False)
     envs = list(config_store.environments())
@@ -414,7 +415,8 @@ async def server_cache_refresh_environment(env: str, set_global_running: bool = 
 
     try:
         client = ArApiClient()
-        add_job(env, "login", "running", "Serverlogin")
+        add_job(env, "environment", "running", f"Starting synchronization for {env.upper()}")
+        add_job(env, "login", "running", "Connecting to AR System using server-login")
         login_result = await client.server_login(env)
         session_id = login_result["sessionId"]
         SERVER_SESSIONS[env] = session_id
@@ -427,7 +429,7 @@ async def server_cache_refresh_environment(env: str, set_global_running: bool = 
 
         sync_cfg = config_store.sync()
         if sync_cfg.get("forms", True):
-            add_job(env, "forms", "running", "Indexing forms according to scope")
+            add_job(env, "forms", "running", "Reading form list and applying configured scope")
             forms = await full_sync_forms(env, session_id=session_id, limit=AUTO_SERVER_SYNC_LIMIT, service_cache=True)
             env_status["forms"] = forms
             env_status["steps"].append({"objectType": "forms", "status": "ok", "finishedAt": now_iso(), "result": forms})
@@ -438,14 +440,14 @@ async def server_cache_refresh_environment(env: str, set_global_running: bool = 
             "active_link_guides", "filter_guides", "packing_lists", "applications", "containers",
         ))
         if workflow_enabled:
-            add_job(env, "workflow", "running", "Indexing workflow/metadata according to scope")
+            add_job(env, "workflow", "running", "Reading workflow object indexes related to scoped forms")
             workflow = await full_sync_workflow(env, session_id=session_id, include_global=sync_cfg.get("include_global", True), limit_forms=AUTO_SERVER_SYNC_LIMIT, service_cache=True)
             env_status["workflow"] = workflow
             env_status["steps"].append({"objectType": "workflow", "status": workflow.get("status", "ok"), "finishedAt": now_iso(), "result": workflow})
             add_job(env, "workflow", workflow.get("status", "ok"), "Workflow index completed", workflow.get("counts") or {})
 
         if sync_cfg.get("details", True):
-            add_job(env, "details", "running", "Loading full ARAPI definitions for deep diff", {"concurrency": sync_cfg.get("details_concurrency", 2)})
+            add_job(env, "details", "running", "Loading detailed ARAPI definitions for deep compare; this can take a while", {"concurrency": sync_cfg.get("details_concurrency", 2)})
             details = await deep_cache_object_details(env, session_id=session_id, service_cache=True)
             env_status["details"] = details
             env_status["steps"].append({"objectType": "details", "status": details.get("status", "ok"), "finishedAt": now_iso(), "result": details})
@@ -459,6 +461,7 @@ async def server_cache_refresh_environment(env: str, set_global_running: bool = 
             target = envs[1]
             if env in (source, target):
                 try:
+                    add_job(env, "differences", "running", f"Calculating differences for {source.upper()} → {target.upper()}")
                     build_difference_cache(source, target)
                 except Exception as diff_error:
                     add_job(env, "differences", "error", f"Failed to build difference index: {diff_error}")
@@ -488,7 +491,7 @@ async def health():
         arapi = await ArApiClient().health()
     except Exception as e:
         arapi = {"status": "error", "message": str(e)}
-    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.4", "logLevel": LOG_LEVEL, "arapi": arapi}
+    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.5", "logLevel": LOG_LEVEL, "arapi": arapi}
 
 
 @app.get("/api/environments")
@@ -1041,27 +1044,35 @@ async def _validated_browser_session(env: str, browser_session_id: str | None) -
         return None, "expired"
 
 
-async def _fetch_detail_hash(session_id: str, environment: str, object_type: str, name: str) -> dict:
-    """Fetch one target/source object detail and return normalized hash + metadata.
+async def _fetch_detail_hash(session_id: str, environment: str, object_type: str, name: str, *, attempts: int = 1, delay: float = 0.0) -> dict:
+    """Fetch one object detail and return normalized hash + metadata.
 
-    This is used to verify migration. It intentionally ignores volatile metadata
-    using the same normalizer as compare, so identical definitions still compare
-    equal even if timestamps/users differ.
+    After DEF import AR System may need a brief moment before the imported object
+    is readable through the metadata API. Targeted refresh therefore supports a
+    small retry loop. Missing objects are returned as non-fatal results so the
+    caller can update the UI/activity log instead of failing the whole migration.
     """
-    try:
-        detail = await ArApiClient().get_object_detail(session_id, object_type, name)
-        detail["definitionLoaded"] = True
-        detail["indexOnly"] = False
-        meta = _object_metadata_columns(detail)
-        return {
-            "exists": True,
-            "hash": stable_hash(detail),
-            "timestamp": meta.get("timestamp", ""),
-            "lastChangedBy": meta.get("lastChangedBy", ""),
-            "detail": detail,
-        }
-    except Exception as e:
-        return {"exists": False, "hash": None, "error": str(e), "timestamp": "", "lastChangedBy": ""}
+    last_error = ""
+    safe_attempts = max(1, int(attempts or 1))
+    for attempt in range(safe_attempts):
+        try:
+            detail = await ArApiClient().get_object_detail(session_id, object_type, name)
+            detail["definitionLoaded"] = True
+            detail["indexOnly"] = False
+            meta = _object_metadata_columns(detail)
+            return {
+                "exists": True,
+                "hash": stable_hash(detail),
+                "timestamp": meta.get("timestamp", ""),
+                "lastChangedBy": meta.get("lastChangedBy", ""),
+                "detail": detail,
+                "attempts": attempt + 1,
+            }
+        except Exception as e:
+            last_error = str(e)
+            if attempt < safe_attempts - 1 and delay > 0:
+                await asyncio.sleep(delay)
+    return {"exists": False, "hash": None, "error": last_error, "timestamp": "", "lastChangedBy": "", "attempts": safe_attempts}
 
 
 def _destination_missing_from_diff_status(item: dict) -> bool:
@@ -1190,8 +1201,13 @@ async def migrate_def(req: MigrateReq):
                 continue
             key = f"{object_type}::{name}"
             before = before_by_key.get(key, {"exists": False, "hash": None})
-            source = source_by_key.get(key, {"exists": False, "hash": None})
-            after = await _fetch_detail_hash(target_session_id, req.target_environment, object_type, name)
+            # Refresh both sides for the handled object. This keeps the difference
+            # index accurate after Promote/Backport without running a full sync.
+            source = await _fetch_detail_hash(source_session_id, req.source_environment, object_type, name, attempts=3, delay=0.35)
+            if source.get("exists") and source.get("detail"):
+                upsert_cached_object(req.source_environment, object_type, name, source["detail"])
+
+            after = await _fetch_detail_hash(target_session_id, req.target_environment, object_type, name, attempts=6, delay=0.75)
             if after.get("exists") and after.get("detail"):
                 upsert_cached_object(req.target_environment, object_type, name, after["detail"])
                 refreshed_count += 1
@@ -1230,7 +1246,7 @@ async def migrate_def(req: MigrateReq):
             "items": verification,
         }
         add_job(req.target_environment, "migrate", "ok", f"Migration completed and verified: {equal_to_source_count}/{len(verification)} target object(s) equal source", {"items": len(req.items), "changed": changed_count, "unchanged": unchanged_count, "equalToSource": equal_to_source_count, "file": result.get("file"), "sourceSessionMode": source_mode, "targetSessionMode": target_mode})
-        add_job(req.target_environment, "targeted-refresh", "ok" if refresh_errors == 0 else "warn", f"Targeted cache refresh completed for {refreshed_count}/{len(verification)} object(s)", {"refreshed": refreshed_count, "errors": refresh_errors, "items": len(verification)})
+        add_job(req.target_environment, "targeted-refresh", "ok" if refresh_errors == 0 else "warn", f"Targeted cache refresh completed for {refreshed_count}/{len(verification)} destination object(s); source side refreshed for recalculation", {"refreshed": refreshed_count, "errors": refresh_errors, "items": len(verification)})
         try:
             build_difference_cache(req.source_environment, req.target_environment)
             build_difference_cache(req.target_environment, req.source_environment)
