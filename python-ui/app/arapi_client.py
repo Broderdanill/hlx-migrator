@@ -15,6 +15,13 @@ class ArApiClient:
         try:
             payload = r.json()
             message = payload.get("message") or payload.get("detail") or str(payload)
+            ar_status = payload.get("arStatus")
+            if ar_status:
+                details = []
+                for s in ar_status:
+                    details.append(f"ARERR {s.get('number')}: {s.get('text') or ''} {s.get('appendedText') or ''}".strip())
+                if details:
+                    message = message + " | " + " | ".join(details)
         except Exception:
             message = r.text
         raise httpx.HTTPStatusError(f"{r.status_code} from ARAPI service: {message}", request=r.request, response=r)

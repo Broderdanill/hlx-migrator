@@ -33,8 +33,10 @@ public class Main {
         Javalin app = Javalin.create(cfg -> cfg.http.defaultContentType = "application/json");
 
         app.exception(Exception.class, (e, ctx) -> {
+            Throwable root = rootCause(e);
+            log.error("ARAPI request failed: {} {} -> {}", ctx.method(), ctx.path(), root.toString(), root);
             ctx.status(HttpStatus.INTERNAL_SERVER_ERROR);
-            ctx.json(ApiError.from(e));
+            ctx.json(ApiError.from(root instanceof Exception ? (Exception) root : e));
         });
 
         app.get("/health", ctx -> ctx.json(Map.of(
@@ -54,8 +56,17 @@ public class Main {
         app.get("/sessions/me", ctx -> {
             String sessionId = sessionId(ctx);
             SessionManager.SessionEntry entry = sessions.info(sessionId);
-            if (entry == null) throw new IllegalStateException("Ogiltig eller utgången ARAPI-session");
+            if (entry == null) {
+                ctx.status(HttpStatus.UNAUTHORIZED);
+                ctx.json(Map.of(
+                        "valid", false,
+                        "status", "expired",
+                        "message", "Invalid or expired ARAPI session"
+                ));
+                return;
+            }
             ctx.json(Map.of(
+                    "valid", true,
                     "sessionId", entry.sessionId,
                     "environment", entry.environment,
                     "username", entry.username,
@@ -205,7 +216,10 @@ public class Main {
             ExportRequest req = json.readValue(ctx.body(), ExportRequest.class);
             List items = new ArrayList();
             for (ExportItem item : req.items) {
-                items.add(createStructItemInfo(item));
+                Object structItem = createStructItemInfo(item);
+                log.info("DEF export item: name='{}', objectType='{}', browserType='{}', mappedType='{}', struct={}",
+                        item.name, item.objectType, item.type, mapStructType(item), describeStructItemInfo(structItem));
+                items.add(structItem);
             }
             Path dir = Paths.get(System.getenv().getOrDefault("EXPORT_DIR", "/data/exports"));
             Files.createDirectories(dir);
@@ -237,7 +251,10 @@ public class Main {
 
             List items = new ArrayList();
             for (ExportItem item : req.items) {
-                items.add(createStructItemInfo(item));
+                Object structItem = createStructItemInfo(item);
+                log.info("DEF migration item: name='{}', objectType='{}', browserType='{}', mappedType='{}', struct={}",
+                        item.name, item.objectType, item.type, mapStructType(item), describeStructItemInfo(structItem));
+                items.add(structItem);
             }
 
             Path dir = Paths.get(System.getenv().getOrDefault("EXPORT_DIR", "/data/exports"));
@@ -796,35 +813,158 @@ public class Main {
     private static Object createStructItemInfo(ExportItem item) throws Exception {
         int type = mapStructType(item);
         String name = item.name;
-        if (name == null || name.isBlank()) throw new IllegalArgumentException("Missing object name in migration/export item");
-        Class<?> cls = Class.forName("com.bmc.arsys.api.StructItemInfo");
-        for (var c : cls.getConstructors()) {
-            Class<?>[] p = c.getParameterTypes();
-            if (p.length == 2 && p[0] == int.class && p[1] == String.class) return c.newInstance(type, name);
-            if (p.length == 2 && p[0] == String.class && p[1] == int.class) return c.newInstance(name, type);
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Missing object name in migration/export item: " + describeExportItem(item));
         }
-        Object obj = cls.getDeclaredConstructor().newInstance();
-        try { cls.getMethod("setType", int.class).invoke(obj, type); } catch (NoSuchMethodException ignored) {}
-        try { cls.getMethod("setName", String.class).invoke(obj, name); } catch (NoSuchMethodException ignored) {}
-        try { cls.getMethod("setObjectType", int.class).invoke(obj, type); } catch (NoSuchMethodException ignored) {}
-        try { cls.getMethod("setObjectName", String.class).invoke(obj, name); } catch (NoSuchMethodException ignored) {}
-        return obj;
+
+        try {
+            Class<?> cls = Class.forName("com.bmc.arsys.api.StructItemInfo");
+
+            // Prefer the no-arg constructor plus explicit setters when available.
+            // This avoids ambiguity between ARAPI versions that expose different
+            // constructor argument orders for StructItemInfo.
+            try {
+                Object obj = cls.getDeclaredConstructor().newInstance();
+                boolean typeSet = trySetInt(obj, type,
+                        "setType", "setObjectType", "setItemType", "setStructItemType", "setTypeId");
+                boolean nameSet = trySetString(obj, name,
+                        "setName", "setObjectName", "setItemName", "setStructItemName");
+                if (typeSet && nameSet) {
+                    log.debug("Created StructItemInfo via setters: {}", describeStructItemInfo(obj));
+                    return obj;
+                }
+            } catch (NoSuchMethodException ignored) {
+                // No default constructor. Fall through to constructor based creation.
+            }
+
+            // Prefer (String, int). In some ARAPI versions this is the canonical order.
+            for (var c : cls.getConstructors()) {
+                Class<?>[] p = c.getParameterTypes();
+                if (p.length == 2 && p[0] == String.class && p[1] == int.class) {
+                    Object obj = c.newInstance(name, type);
+                    log.debug("Created StructItemInfo via (String,int): {}", describeStructItemInfo(obj));
+                    return obj;
+                }
+            }
+
+            // Fallback to (int, String) for ARAPI versions exposing that order.
+            for (var c : cls.getConstructors()) {
+                Class<?>[] p = c.getParameterTypes();
+                if (p.length == 2 && p[0] == int.class && p[1] == String.class) {
+                    Object obj = c.newInstance(type, name);
+                    log.debug("Created StructItemInfo via (int,String): {}", describeStructItemInfo(obj));
+                    return obj;
+                }
+            }
+
+            throw new IllegalArgumentException("No compatible StructItemInfo constructor or setters found");
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Could not create ARAPI StructItemInfo for " + describeExportItem(item)
+                    + " mappedType=" + type + ": " + rootCause(e).getMessage(), e);
+        }
+    }
+
+    private static boolean trySetInt(Object obj, int value, String... methods) {
+        for (String method : methods) {
+            try {
+                obj.getClass().getMethod(method, int.class).invoke(obj, value);
+                return true;
+            } catch (Exception ignored) { }
+            try {
+                obj.getClass().getMethod(method, Integer.class).invoke(obj, value);
+                return true;
+            } catch (Exception ignored) { }
+        }
+        return false;
+    }
+
+    private static boolean trySetString(Object obj, String value, String... methods) {
+        for (String method : methods) {
+            try {
+                obj.getClass().getMethod(method, String.class).invoke(obj, value);
+                return true;
+            } catch (Exception ignored) { }
+        }
+        return false;
+    }
+
+    private static String describeStructItemInfo(Object obj) {
+        if (obj == null) return "<null>";
+        Map<String, Object> values = new LinkedHashMap<>();
+        values.put("class", obj.getClass().getName());
+        for (String method : List.of(
+                "getType", "getObjectType", "getItemType", "getStructItemType", "getTypeId",
+                "getName", "getObjectName", "getItemName", "getStructItemName")) {
+            try {
+                Method m = obj.getClass().getMethod(method);
+                values.put(method, m.invoke(obj));
+            } catch (Exception ignored) { }
+        }
+        values.put("toString", String.valueOf(obj));
+        return values.toString();
+    }
+
+    private static String describeExportItem(ExportItem item) {
+        if (item == null) return "<null>";
+        return "{name='" + item.name + "', objectType='" + item.objectType + "', type=" + item.type + "}";
     }
 
     private static int mapStructType(ExportItem item) {
-        String ot = item.objectType == null ? "" : item.objectType.toLowerCase(Locale.ROOT);
-        // AR System StructItemInfo type values used by exportDef/importDef.
-        // These are intentionally mapped server-side so the browser does not need to know ARAPI constants.
+        String ot = item.objectType == null ? "" : item.objectType.toLowerCase(Locale.ROOT).trim();
+
         return switch (ot) {
-            case "form", "schema" -> 1;
-            case "filter" -> 2;
-            case "active_link", "active-link", "activelink" -> 3;
-            case "escalation" -> 4;
-            case "menu", "character_menu", "file_menu", "search_menu", "sql_menu", "data_dictionary_menu" -> 5;
-            case "active_link_guide", "filter_guide", "packing_list", "application", "other_container", "container" -> 6;
-            case "image" -> 12;
-            default -> item.type > 0 ? item.type : 1;
+            case "form", "schema", "forms" -> arConst(
+                    List.of("AR_STRUCT_ITEM_SCHEMA", "AR_STRUCT_ITEM_FORM"), 1);
+            case "filter", "filters" -> arConst(
+                    List.of("AR_STRUCT_ITEM_FILTER"), 2);
+            case "active_link", "active-link", "activelink", "active_links", "active link" -> arConst(
+                    List.of("AR_STRUCT_ITEM_ACTIVE_LINK", "AR_STRUCT_ITEM_ACTLINK", "AR_STRUCT_ITEM_ACTL"), 3);
+            case "escalation", "escalations" -> arConst(
+                    List.of("AR_STRUCT_ITEM_ESCALATION"), 4);
+            case "menu", "menus", "character_menu", "file_menu", "search_menu", "sql_menu", "data_dictionary_menu" -> arConst(
+                    List.of("AR_STRUCT_ITEM_CHAR_MENU", "AR_STRUCT_ITEM_MENU"), 5);
+            case "active_link_guide", "active-link-guide", "filter_guide", "filter-guide",
+                    "packing_list", "packing-list", "application", "applications",
+                    "other_container", "container", "containers" -> arConst(
+                    List.of("AR_STRUCT_ITEM_CONTAINER"), 6);
+            case "image", "images" -> arConst(
+                    List.of("AR_STRUCT_ITEM_IMAGE"), 7);
+            default -> {
+                if (item.type > 0) {
+                    log.warn("Unknown objectType='{}' for '{}'; falling back to browser supplied type={}",
+                            item.objectType, item.name, item.type);
+                    yield item.type;
+                }
+                throw new IllegalArgumentException("Unsupported object type for DEF export/migration: " + describeExportItem(item));
+            }
         };
+    }
+
+    private static int arConst(List<String> names, int fallback) {
+        for (String name : names) {
+            try {
+                java.lang.reflect.Field field = Constants.class.getField(name);
+                Object value = field.get(null);
+                if (value instanceof Number n) return n.intValue();
+            } catch (Exception ignored) { }
+        }
+        log.debug("No ARAPI Constants value found for {}; using fallback {}", names, fallback);
+        return fallback;
+    }
+
+    private static Throwable rootCause(Throwable t) {
+        Throwable current = t;
+        while (current instanceof InvocationTargetException && ((InvocationTargetException) current).getTargetException() != null) {
+            current = ((InvocationTargetException) current).getTargetException();
+        }
+        while (current.getCause() != null && current.getCause() != current) {
+            if (current instanceof InvocationTargetException && ((InvocationTargetException) current).getTargetException() != null) {
+                current = ((InvocationTargetException) current).getTargetException();
+                continue;
+            }
+            current = current.getCause();
+        }
+        return current;
     }
 
 

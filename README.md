@@ -465,3 +465,9 @@ Contributions should follow:
 Internal project.
 
 Copyright © HLX.
+
+## Version 1.0.6 notes
+
+- Name search remains always visible.
+- Changed By and Changed From/To filters are now inside an expandable Filters panel.
+- Compare, Migrate, and Download buttons are disabled until at least one object is selected.

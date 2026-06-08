@@ -7,8 +7,9 @@
   <link rel="icon" type="image/png" href="/static/hlx-migrator-icon.png" />
   <style>
     :root{--bg:#070b12;--bg2:#0c1423;--panel:#101b2d;--panel2:#15243b;--line:#253957;--line2:#38577f;--text:#e7edf7;--muted:#91a2bc;--accent:#6ea8ff;--ok:#58d68d;--warn:#ffd166;--bad:#ff6b6b;--diff:#ff9f43;--sel:#223e68;--hover:#1c3151;--shadow:0 12px 28px rgba(0,0,0,.38)}
-    *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top left,#14294c,#070b12 44%,#04060b);color:var(--text);font:13px/1.28 Segoe UI,system-ui,-apple-system,sans-serif} button,select,input{font:inherit;border:1px solid var(--line2);border-radius:7px;background:#0b1424;color:var(--text);padding:5px 9px} button{cursor:pointer;background:#17253d}button:hover{background:#22395d}button.primary{background:linear-gradient(#6ea8ff,#3b71df);border-color:#80b4ff;color:white}button.danger{background:#391a25;border-color:#833a4f;color:#ffd4dc}button.ghost{background:transparent}.ok{color:var(--ok);font-weight:700}.warn{color:var(--warn);font-weight:700}.bad{color:var(--bad);font-weight:700}.muted{color:var(--muted)}.small{font-size:12px}.mono{font-family:ui-monospace,Consolas,monospace}.hidden{display:none!important}.sync-active{animation:syncPulse 1.25s ease-in-out infinite;border-color:#ffd166!important;color:#fff;background:linear-gradient(90deg,#26385a,#6b4b18)!important}@keyframes syncPulse{0%{box-shadow:0 0 0 rgba(255,209,102,0)}50%{box-shadow:0 0 16px rgba(255,209,102,.55)}100%{box-shadow:0 0 0 rgba(255,209,102,0)}}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top left,#14294c,#070b12 44%,#04060b);color:var(--text);font:13px/1.28 Segoe UI,system-ui,-apple-system,sans-serif} button,select,input{font:inherit;border:1px solid var(--line2);border-radius:7px;background:#0b1424;color:var(--text);padding:5px 9px} button{cursor:pointer;background:#17253d}button:hover{background:#22395d}button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.35);box-shadow:none!important}button:disabled:hover{background:#17253d}button.primary{background:linear-gradient(#6ea8ff,#3b71df);border-color:#80b4ff;color:white}button.danger{background:#391a25;border-color:#833a4f;color:#ffd4dc}button.ghost{background:transparent}.ok{color:var(--ok);font-weight:700}.warn{color:var(--warn);font-weight:700}.bad{color:var(--bad);font-weight:700}.muted{color:var(--muted)}.small{font-size:12px}.mono{font-family:ui-monospace,Consolas,monospace}.hidden{display:none!important}.sync-active{animation:syncPulse 1.25s ease-in-out infinite;border-color:#ffd166!important;color:#fff;background:linear-gradient(90deg,#26385a,#6b4b18)!important}@keyframes syncPulse{0%{box-shadow:0 0 0 rgba(255,209,102,0)}50%{box-shadow:0 0 16px rgba(255,209,102,.55)}100%{box-shadow:0 0 0 rgba(255,209,102,0)}}
     header{height:58px;background:linear-gradient(90deg,#0b1220,#182847);display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line);box-shadow:var(--shadow)}.brand{display:flex;align-items:center;gap:10px}.app-icon{width:45px;height:45px;border-radius:50%;object-fit:cover;border:0;box-shadow:0 0 14px rgba(110,168,255,.20)} h1{font-size:18px;margin:0}.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.layout{display:grid;grid-template-columns:285px 1fr;min-height:calc(100vh - 58px)} aside{border-right:1px solid var(--line);background:rgba(10,18,31,.94);display:flex;flex-direction:column}.side-head{padding:12px 14px;border-bottom:1px solid var(--line);background:#0b1424}.env-pair{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center}.env-pair select{width:100%;min-width:0}.arrow{color:var(--accent);font-weight:800;font-size:18px;text-align:center}.tree button{display:flex;justify-content:space-between;width:100%;border:0;border-bottom:1px solid #142238;border-radius:0;background:transparent;padding:11px 14px;text-align:left}.tree button.active{background:#1c3151;color:white;border-left:4px solid var(--accent)}.badge{min-width:22px;text-align:center;border-radius:999px;background:#223653;padding:2px 7px;color:#c8d6eb}.main{padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}.panel{background:rgba(17,28,47,.94);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}.panel-pad{padding:12px}.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pill{display:inline-flex;gap:5px;align-items:center;border:1px solid var(--line2);border-radius:999px;padding:3px 9px;background:#0d1729;color:#d5e2f4}.metric{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid #1a2a44}.env-menu{position:absolute;right:14px;top:62px;width:min(920px,calc(100vw - 28px));max-height:70vh;overflow:auto;background:#0b1220;border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow);z-index:9;padding:12px}.env-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}.env-card{background:#111c2f;border:1px solid var(--line);border-radius:10px;padding:10px}.login-panel{display:none}.login-panel.open{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:72px 24px 24px;background:rgba(0,0,0,.64);backdrop-filter:blur(3px);z-index:28}.login-modal-card{width:min(980px,calc(100vw - 40px));max-height:calc(100vh - 100px);overflow:auto;background:#0b1220;border:1px solid var(--line2);border-radius:14px;box-shadow:0 25px 80px rgba(0,0,0,.75)}.login-env{border:1px solid var(--line);border-radius:12px;background:#0f1a2d;padding:12px;margin-top:10px}.login-env h3{margin:0}.login-env .row{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) minmax(140px,1fr) auto auto;gap:8px;align-items:end}.login-env label{display:block}.login-env input{width:100%}.modal-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.modal-form label{display:block}.modal-form input,.modal-form select,textarea.modal-textarea{width:100%}.modal-wide{grid-column:1/-1}textarea.modal-textarea{min-height:90px;resize:vertical}@media(max-width:850px){.login-env .row,.modal-form{grid-template-columns:1fr}}
+    .filter-main-row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}.name-filter{min-width:280px;max-width:520px;flex:1}.action-buttons{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.filter-sub-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}.filter-toggle{display:inline-flex;align-items:center;gap:6px}.filter-count{background:#315a91;color:#fff;border-radius:999px;padding:1px 6px;font-size:11px}.advanced-filters{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#0b1424;display:flex;gap:8px;align-items:end;flex-wrap:wrap}.advanced-filters label{display:block}.advanced-filters input{min-width:185px}.selected-badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line2);border-radius:999px;padding:3px 9px;background:#0d1729;color:#c8d6eb;max-width:720px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}@media(max-width:900px){.name-filter{min-width:100%;max-width:none}.action-buttons{width:100%}}
     .content-grid{display:block;min-height:0;flex:1;overflow:hidden}.table-wrap{overflow:auto;height:100%;max-height:none;border-radius:10px;border:1px solid var(--line)}table{width:100%;border-collapse:collapse}th{position:sticky;top:0;background:#0b1424;z-index:1;color:#b8c8e0}th,td{padding:2px 7px;border-bottom:1px solid #1b2c47;text-align:left}tbody tr:nth-child(even){background:#0e1a2d}tbody tr:hover{background:var(--hover)}tbody tr.selected{background:var(--sel)}.name-link{cursor:pointer;color:#ddebff}.name-link:hover{text-decoration:underline}.status-badge{cursor:pointer}.s-equal{color:var(--ok);font-weight:700}.s-different{color:var(--diff);font-weight:700}.s-missing_in_source,.s-missing_in_target{color:var(--bad);font-weight:700}.s-not_compared{color:var(--muted)} .detail pre{white-space:pre-wrap;word-break:break-word;max-height:47vh;overflow:auto;background:#07101d;border:1px solid #1b2c47;border-radius:8px;padding:10px}
     .detail-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}
     .detail-tabs{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
@@ -84,18 +85,29 @@
     <section class="panel panel-pad">
       <div class="toolbar">
         <div class="row"><strong id="tableTitle">Forms</strong><span id="summary" class="summary"></span></div>
-        <div class="row">
-          <input id="nameFilter" placeholder="Name..." oninput="onSearchInput()">
-          <input id="timestampFilter" placeholder="Timestamp..." oninput="onSearchInput()">
-          <input id="changedByFilter" placeholder="Last Changed By..." oninput="onSearchInput()">
-          <button class="ghost" onclick="clearFilters()">Clear Filters</button>
-          <button onclick="compareSelected()" class="primary">Compare Selected</button>
-          <button onclick="startMigration()" class="primary">Migrate Selected</button>
-          <button onclick="startDownload()">Download...</button>
+      </div>
+      <div class="filter-main-row">
+        <input id="nameFilter" class="name-filter" placeholder="Name..." oninput="onSearchInput()">
+        <div class="action-buttons">
+          <button id="compareBtn" onclick="compareSelected()" class="primary" disabled>Compare Selected</button>
+          <button id="migrateBtn" onclick="startMigration()" class="primary" disabled>Migrate Selected</button>
+          <button id="downloadBtn" onclick="startDownload()" disabled>Download...</button>
         </div>
       </div>
-      <div class="small muted" style="margin-top:8px">Browse mode shows objects from the source environment. Select objects, then use <b>Compare Selected</b>, <b>Migrate Selected</b> or <b>Download</b>. Forms can migrate workflow or data and export matching entries. Details opens the full diff window.</div>
-      <div id="selectedSummary" class="selected-summary small" style="margin-top:8px">0 selected.</div>
+      <div class="filter-sub-row">
+        <button id="advancedFilterToggle" class="ghost filter-toggle" onclick="toggleAdvancedFilters()">Filters <span id="filterCount" class="filter-count hidden">0</span> ▾</button>
+        <span id="selectedSummary" class="selected-badge small">Selected: 0</span>
+      </div>
+      <div id="advancedFilters" class="advanced-filters hidden">
+        <label class="small muted">Changed By<br><input id="changedByFilter" placeholder="Last Changed By..." oninput="onSearchInput()"></label>
+        <label class="small muted">Changed From<br><input id="changedFromFilter" type="datetime-local" onchange="onSearchInput()"></label>
+        <label class="small muted">Changed To<br><input id="changedToFilter" type="datetime-local" onchange="onSearchInput()"></label>
+        <button onclick="setDateRange(1)">Last 24 Hours</button>
+        <button onclick="setDateRange(7)">Last 7 Days</button>
+        <button onclick="setDateRange(30)">Last 30 Days</button>
+        <button onclick="setDateRange(90)">Last 90 Days</button>
+        <button class="ghost" onclick="clearFilters()">Clear Filters</button>
+      </div>
       <div id="pager" class="row small muted" style="margin-top:8px"></div>
     </section>
     <section class="content-grid">
@@ -120,11 +132,9 @@
       <div class="tabs">
         <button id="fd_btn_diff" class="active" onclick="fullDiffTab('diff')">Differences</button>
         <button id="fd_btn_side" onclick="fullDiffTab('side')">Side-by-side JSON</button>
-        <button id="fd_btn_raw" onclick="fullDiffTab('raw')">Raw DeepDiff</button>
       </div>
       <div id="fd_diff" data-full-tab="diff"></div>
       <div id="fd_side" data-full-tab="side" class="hidden"></div>
-      <div id="fd_raw" data-full-tab="raw" class="hidden"></div>
     </div>
   </div>
 </div>
@@ -166,7 +176,7 @@
 const TYPE_LABEL={form:'Forms',active_link:'Active Links',filter:'Filters',escalation:'Escalations',menu:'Menus',active_link_guide:'Active Link Guides',filter_guide:'Filter Guides',packing_list:'Packing Lists',application:'Applications',image:'Images'};
 const TYPE_TO_EXPORT={form:1,active_link:2,filter:3,escalation:4,menu:5,active_link_guide:6,filter_guide:6,packing_list:6,application:6,image:7};
 const TYPES=['form','active_link','filter','menu','escalation','active_link_guide','filter_guide','packing_list','application','image'];
-const state={envs:[],scope:{},sync:{},cache:{},serverCache:{},sessions:JSON.parse(sessionStorage.getItem('hlx.sessions')||'{}'),source:sessionStorage.getItem('hlx.sourceEnv')||'',target:sessionStorage.getItem('hlx.targetEnv')||'',type:'form',mode:'browse',objects:[],compare:null,selected:[],statusFilter:'',sortKey:'name',sortDir:'asc',pageSize:100,offset:0,total:0,loadingObjects:false,searchTimer:null,filters:{name:'',timestamp:'',changedBy:''}};
+const state={envs:[],scope:{},sync:{},cache:{},serverCache:{},sessions:JSON.parse(sessionStorage.getItem('hlx.sessions')||'{}'),source:sessionStorage.getItem('hlx.sourceEnv')||'',target:sessionStorage.getItem('hlx.targetEnv')||'',type:'form',mode:'browse',objects:[],compare:null,selected:[],statusFilter:'',sortKey:'name',sortDir:'asc',pageSize:100,offset:0,total:0,loadingObjects:false,searchTimer:null,filters:{name:'',changedBy:'',changedFrom:'',changedTo:''},showAdvancedFilters:false};
 let dialogResolver=null;
 let busyDepth=0;
 function beginBusy(title='Working...', detail='Please wait.'){
@@ -305,17 +315,50 @@ The cache will update in the background.`);
 function readFilters(){
   state.filters={
     name:(document.getElementById('nameFilter')?.value||''),
-    timestamp:(document.getElementById('timestampFilter')?.value||''),
-    changedBy:(document.getElementById('changedByFilter')?.value||'')
+    changedBy:(document.getElementById('changedByFilter')?.value||''),
+    changedFrom:(document.getElementById('changedFromFilter')?.value||''),
+    changedTo:(document.getElementById('changedToFilter')?.value||'')
   };
+  renderFilterState();
+}
+function activeAdvancedFilterCount(){
+  const f=state.filters||{};
+  return ['changedBy','changedFrom','changedTo'].filter(k=>String(f[k]||'').trim()).length;
+}
+function renderFilterState(){
+  const count=activeAdvancedFilterCount();
+  const badge=document.getElementById('filterCount');
+  if(badge){badge.textContent=String(count);badge.classList.toggle('hidden',count===0);}
+  const toggle=document.getElementById('advancedFilterToggle');
+  if(toggle){toggle.classList.toggle('filter-active',count>0);}
+  const panel=document.getElementById('advancedFilters');
+  if(panel){panel.classList.toggle('hidden',!state.showAdvancedFilters);}
+}
+function toggleAdvancedFilters(){
+  state.showAdvancedFilters=!state.showAdvancedFilters;
+  renderFilterState();
 }
 function clearFilters(){
   if(document.getElementById('nameFilter'))nameFilter.value='';
-  if(document.getElementById('timestampFilter'))timestampFilter.value='';
   if(document.getElementById('changedByFilter'))changedByFilter.value='';
+  if(document.getElementById('changedFromFilter'))changedFromFilter.value='';
+  if(document.getElementById('changedToFilter'))changedToFilter.value='';
   readFilters();
   state.offset=0;
+  renderFilterState();
   loadSourceObjects().catch(e=>setStatus(e.message));
+}
+function localDateTimeValue(d){
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function setDateRange(days){
+  state.showAdvancedFilters=true;
+  const to=new Date();
+  const from=new Date(to.getTime()-days*24*60*60*1000);
+  if(document.getElementById('changedFromFilter'))changedFromFilter.value=localDateTimeValue(from);
+  if(document.getElementById('changedToFilter'))changedToFilter.value=localDateTimeValue(to);
+  onSearchInput();
 }
 function onSearchInput(){
   readFilters();
@@ -325,11 +368,14 @@ function onSearchInput(){
 function rowMatchesFilters(o){
   const f=state.filters||{};
   const name=(f.name||'').toLowerCase();
-  const ts=(f.timestamp||'').toLowerCase();
   const by=(f.changedBy||'').toLowerCase();
+  const from=f.changedFrom?new Date(f.changedFrom).getTime():null;
+  const to=f.changedTo?new Date(f.changedTo).getTime():null;
+  const ts=o.timestamp?new Date(String(o.timestamp).replace(' UTC','Z')).getTime():null;
   return (!name || String(o.name||'').toLowerCase().includes(name))
-    && (!ts || String(o.timestamp||'').toLowerCase().includes(ts))
-    && (!by || String(o.lastChangedBy||'').toLowerCase().includes(by));
+    && (!by || String(o.lastChangedBy||'').toLowerCase().includes(by))
+    && (!from || (ts && ts>=from))
+    && (!to || (ts && ts<=to));
 }
 async function loadSourceObjects(){
   savePair();
@@ -342,11 +388,12 @@ async function loadSourceObjects(){
   setStatus(`Loading ${TYPE_LABEL[state.type]} from ${state.source.toUpperCase()}...`);
   readFilters();
   const nameQ=encodeURIComponent(state.filters.name||'');
-  const timestampQ=encodeURIComponent(state.filters.timestamp||'');
+  const changedFromQ=encodeURIComponent(state.filters.changedFrom||'');
+  const changedToQ=encodeURIComponent(state.filters.changedTo||'');
   const changedByQ=encodeURIComponent(state.filters.changedBy||'');
   const sort=encodeURIComponent(state.sortKey||'name');
   const dir=encodeURIComponent(state.sortDir||'asc');
-  const r=await api(`/api/objects/${state.type}?environment=${encodeURIComponent(state.source)}&name_q=${nameQ}&timestamp_q=${timestampQ}&changed_by_q=${changedByQ}&limit=${state.pageSize}&offset=${state.offset}&sort=${sort}&direction=${dir}`);
+  const r=await api(`/api/objects/${state.type}?environment=${encodeURIComponent(state.source)}&name_q=${nameQ}&changed_from=${changedFromQ}&changed_to=${changedToQ}&changed_by_q=${changedByQ}&limit=${state.pageSize}&offset=${state.offset}&sort=${sort}&direction=${dir}`);
   state.objects=r.objects||[];
   state.total=r.total||0;
   state.offset=r.offset||0;
@@ -503,7 +550,7 @@ function numberedJsonLines(value){
   const text=stringifyValue(value);
   return text.split('\n');
 }
-function renderSideBySideJson(sourceValue,targetValue){
+function renderSideBySideJson(sourceValue,targetValue, onlyDiffs=true){
   const left=numberedJsonLines(sourceValue);
   const right=numberedJsonLines(targetValue);
   const max=Math.max(left.length,right.length);
@@ -515,9 +562,22 @@ function renderSideBySideJson(sourceValue,targetValue){
     if(i>=left.length) cls='only-right';
     else if(i>=right.length) cls='only-left';
     else if(l!==r) cls='changed';
+    if(onlyDiffs && cls==='same') continue;
     rows.push(`<div class="side-diff-row ${cls}"><div class="side-diff-cell"><span class="side-diff-line-no">${i<left.length?i+1:''}</span>${l?html(l):'<span class="side-diff-empty"> </span>'}</div><div class="side-diff-cell"><span class="side-diff-line-no">${i<right.length?i+1:''}</span>${r?html(r):'<span class="side-diff-empty"> </span>'}</div></div>`);
   }
-  return `<div class="side-diff"><div class="side-diff-head"><div>Source</div><div>Target</div></div>${rows.join('')}</div>`;
+  const empty=onlyDiffs && !rows.length ? '<div class="panel-pad ok">No line differences to show.</div>' : '';
+  return `<div class="row" style="margin-bottom:8px"><label class="pill"><input id="onlyDiffsBox" type="checkbox" checked onchange="refreshSideDiff()"> Show only differences</label></div><div class="side-diff"><div class="side-diff-head"><div>Source</div><div>Target</div></div>${empty}${rows.join('')}</div>`;
+}
+function refreshSideDiff(){
+  const d=state.currentDetail;if(!d)return;
+  const c=d.compared||{};
+  const only=document.getElementById('onlyDiffsBox')?.checked ?? true;
+  fd_side.innerHTML=renderSideBySideJson(c.source,c.target,only);
+  const sourceEnv=(c.sourceEnvironment||state.source||'source').toUpperCase();
+  const targetEnv=(c.targetEnvironment||state.target||'target').toUpperCase();
+  const sideHeads=fd_side.querySelectorAll('.side-diff-head div');
+  if(sideHeads.length>=2){sideHeads[0].textContent=sourceEnv;sideHeads[1].textContent=targetEnv;}
+  const box=document.getElementById('onlyDiffsBox'); if(box) box.checked=only;
 }
 function openFullDiff(){
   const d=state.currentDetail;
@@ -528,10 +588,9 @@ function openFullDiff(){
   fullDiffTitle.textContent=o.name||c.name||'Object diff';
   fullDiffSubtitle.textContent=`${TYPE_LABEL[c.objectType||state.type]||c.objectType||state.type} · ${sourceEnv} → ${targetEnv} · status: ${o.status||'not compared'} · detail loaded: ${c.detailLoaded?'yes':'no'}`;
   fd_diff.innerHTML=renderFullDiffRows(c.diffRows||[]);
-  fd_side.innerHTML=renderSideBySideJson(c.source,c.target);
+  fd_side.innerHTML=renderSideBySideJson(c.source,c.target,true);
   const sideHeads=fd_side.querySelectorAll('.side-diff-head div');
   if(sideHeads.length>=2){sideHeads[0].textContent=sourceEnv;sideHeads[1].textContent=targetEnv;}
-  fd_raw.innerHTML=`<div class="big-json"><div><strong>Raw DeepDiff</strong><pre>${html(JSON.stringify(o.diff||{},null,2))}</pre></div></div>`;
   fullDiffModal.classList.remove('hidden');
   fullDiffTab('diff');
 }
@@ -542,7 +601,20 @@ function formatJsonForDisplay(value){
   return html(stringifyValue(value));
 }
 
-function renderSelected(){const count=state.selected.length;if(!count){selectedSummary.textContent='0 selected.';return}const preview=state.selected.slice(0,5).map(x=>`${TYPE_LABEL[x.objectType]||x.objectType}: ${x.name}`).join(' | ');selectedSummary.textContent=`${count} selected: ${preview}${count>5?' | ...':''}`}
+function updateActionButtons(){
+  const hasSelection=state.selected.length>0;
+  for(const id of ['compareBtn','migrateBtn','downloadBtn']){
+    const btn=document.getElementById(id);
+    if(btn)btn.disabled=!hasSelection;
+  }
+}
+function renderSelected(){
+  const count=state.selected.length;
+  if(!count){selectedSummary.textContent='Selected: 0';updateActionButtons();return}
+  const preview=state.selected.slice(0,4).map(x=>`${TYPE_LABEL[x.objectType]||x.objectType}: ${x.name}`).join(' | ');
+  selectedSummary.textContent=`Selected: ${count} · ${preview}${count>4?' | ...':''}`;
+  updateActionButtons();
+}
 function clearSelection(){state.selected=[];renderSelected();renderRows()}
 
 

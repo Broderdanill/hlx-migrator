@@ -99,7 +99,7 @@ containers/
 # ARAPI libraries
 ###############################################################################
 
-/arapi/
+arapi/
 lib/arapi/
 lib/*.jar
 

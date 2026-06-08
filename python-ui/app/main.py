@@ -21,7 +21,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.0.3")
+app = FastAPI(title="HLX Migrator", version="1.0.7")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -204,6 +204,26 @@ def _format_arapi_timestamp(value) -> str:
         return text
     return str(raw)
 
+
+
+def _parse_display_timestamp(value: str | None):
+    """Parse displayed timestamps such as '2026-06-04 11:30:39 UTC'."""
+    if not value:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        if text.endswith(" UTC"):
+            text = text[:-4] + "+00:00"
+        if "T" not in text and " " in text:
+            text = text.replace(" ", "T", 1)
+        dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+    except Exception:
+        return None
 
 def _object_metadata_columns(data: dict) -> dict:
     timestamp = _find_first_metadata_value(data, (
@@ -532,6 +552,8 @@ def list_cached_objects_api(
     q: str | None = None,
     name_q: str | None = None,
     timestamp_q: str | None = None,
+    changed_from: str | None = None,
+    changed_to: str | None = None,
     changed_by_q: str | None = None,
     limit: int = 500,
     offset: int = 0,
@@ -554,6 +576,10 @@ def list_cached_objects_api(
     q_norm = (q or "").strip()
     name_q_norm = (name_q or "").strip()
     timestamp_q_norm = (timestamp_q or "").strip()
+    changed_from_norm = (changed_from or "").strip()
+    changed_to_norm = (changed_to or "").strip()
+    changed_from_dt = _parse_display_timestamp(changed_from_norm)
+    changed_to_dt = _parse_display_timestamp(changed_to_norm)
     changed_by_q_norm = (changed_by_q or "").strip()
     safe_limit = max(1, min(int(limit or 500), int(config_store.ui().get("max_page_size", 2000))))
     safe_offset = max(0, int(offset or 0))
@@ -593,6 +619,14 @@ def list_cached_objects_api(
             return False
         if timestamp_q_norm and timestamp_q_norm.lower() not in str(obj.get("timestamp") or "").lower():
             return False
+        if changed_from_dt or changed_to_dt:
+            obj_dt = _parse_display_timestamp(str(obj.get("timestamp") or ""))
+            if obj_dt is None:
+                return False
+            if changed_from_dt and obj_dt < changed_from_dt:
+                return False
+            if changed_to_dt and obj_dt > changed_to_dt:
+                return False
         if changed_by_q_norm and changed_by_q_norm.lower() not in str(obj.get("lastChangedBy") or "").lower():
             return False
         return True
@@ -620,7 +654,7 @@ def list_cached_objects_api(
         # metadata, such as Timestamp and Last Changed By. For normal browsing we
         # keep paging in SQL. When q is present, we scan this object type once,
         # compute metadata columns, filter, sort and then page the matched result.
-        if q_norm or name_q_norm or timestamp_q_norm or changed_by_q_norm:
+        if q_norm or name_q_norm or timestamp_q_norm or changed_from_dt or changed_to_dt or changed_by_q_norm:
             all_rows = list(
                 db.execute(
                     select(CachedObject)

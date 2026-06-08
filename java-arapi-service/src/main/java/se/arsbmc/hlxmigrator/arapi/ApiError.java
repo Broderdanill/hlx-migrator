@@ -9,6 +9,7 @@ public class ApiError {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("error", ex.getClass().getName());
         out.put("message", ex.getMessage());
+        if (ex.getCause() != null) out.put("cause", ex.getCause().getMessage());
         if (ex instanceof ARException ar) {
             List<Map<String, Object>> statuses = new ArrayList<>();
             try {
