@@ -561,3 +561,11 @@ UI layout polish:
 - Changed Status / Activity Log from a fixed overlay to a normal panel below the result table, avoiding overlap with long result lists.
 - Kept compact table row styling from 1.1.17.
 
+
+
+## 1.1.19
+
+- Table columns now default to fit the available viewport better, with horizontal scrolling only when resized/narrower than minimum widths.
+- Result rows are more compact for high-volume object lists.
+- Scrollbars are styled to match the dark UI.
+- Object type navigation now uses compact monochrome icons inspired by Developer Studio categories.
