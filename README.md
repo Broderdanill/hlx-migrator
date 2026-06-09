@@ -512,3 +512,21 @@ Copyright © HLX.
 - Missing customization layer metadata is shown as `Unknown` instead of being treated as `Base`.
 - The Customization Type filter is a compact multi-select field for Base, Custom, Overlay and Unknown.
 - The Java ARAPI service attempts to expose customization layer metadata from object details using ARAPI reflection and safe-object inspection.
+
+
+## 1.1.12 notes
+
+- Result table columns can now be resized by dragging the divider on the right side of each resizable column header.
+- Column widths are saved in the browser, so users can keep a wider Name column without changing server configuration.
+- The default Name column is wider, and a Reset columns button restores the default layout.
+
+### 1.1.14
+
+- Aligned Advanced Filter fields so Customization follows the same label/input layout as Changed By and timestamp filters.
+- Updated the dark theme to use the requested HLX color palette: dark blue, middle blue, cyan accent, yellow warning/accent, red error and dark green success.
+- Difference view continues to compare only the currently selected source and destination environment pair.
+
+### 1.1.13
+
+- Fixed row **Details** action after the resizable-column optimization.
+- Details now opens from the current rendered row index without embedding large JSON payloads in the table HTML.

@@ -21,7 +21,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.1.11")
+app = FastAPI(title="HLX Migrator", version="1.1.14")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -556,7 +556,7 @@ async def health():
         arapi = await ArApiClient().health()
     except Exception as e:
         arapi = {"status": "error", "message": str(e)}
-    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.11", "logLevel": LOG_LEVEL, "arapi": arapi}
+    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.14", "logLevel": LOG_LEVEL, "arapi": arapi}
 
 
 @app.get("/api/environments")
