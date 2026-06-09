@@ -95,7 +95,7 @@ public class Main {
             Object formObj = user.getForm(name);
             out.put("type", "form");
             out.put("name", name);
-            out.put("customizationType", detectCustomizationType(formObj));
+            out.put("customizationType", detectCustomizationType(user, "form", name, formObj));
             out.put("form", SafeObjectMapper.toSafe(formObj));
             out.put("fields", SafeObjectMapper.toSafe(user.getListFieldObjects(name)));
             out.put("views", SafeObjectMapper.toSafe(user.getListViewObjects(name, 0L, null)));
@@ -177,7 +177,7 @@ public class Main {
             String name = ctx.pathParam("name");
             Object obj = user.getActiveLink(name);
             ctx.json(Map.of("type", "active_link", "name", name, "definitionLoaded", true,
-                    "customizationType", detectCustomizationType(obj),
+                    "customizationType", detectCustomizationType(user, "active_link", name, obj),
                     "object", SafeObjectMapper.toSafe(obj)));
         });
 
@@ -186,7 +186,7 @@ public class Main {
             String name = ctx.pathParam("name");
             Object obj = user.getFilter(name);
             ctx.json(Map.of("type", "filter", "name", name, "definitionLoaded", true,
-                    "customizationType", detectCustomizationType(obj),
+                    "customizationType", detectCustomizationType(user, "filter", name, obj),
                     "object", SafeObjectMapper.toSafe(obj)));
         });
 
@@ -195,7 +195,7 @@ public class Main {
             String name = ctx.pathParam("name");
             Object obj = user.getEscalation(name);
             ctx.json(Map.of("type", "escalation", "name", name, "definitionLoaded", true,
-                    "customizationType", detectCustomizationType(obj),
+                    "customizationType", detectCustomizationType(user, "escalation", name, obj),
                     "object", SafeObjectMapper.toSafe(obj)));
         });
 
@@ -204,7 +204,7 @@ public class Main {
             String name = ctx.pathParam("name");
             Object obj = user.getMenu(name, null);
             ctx.json(Map.of("type", "menu", "name", name, "definitionLoaded", true,
-                    "customizationType", detectCustomizationType(obj),
+                    "customizationType", detectCustomizationType(user, "menu", name, obj),
                     "object", SafeObjectMapper.toSafe(obj)));
         });
 
@@ -213,7 +213,7 @@ public class Main {
             String name = ctx.pathParam("name");
             Object obj = user.getContainer(name);
             ctx.json(Map.of("type", "container", "name", name, "definitionLoaded", true,
-                    "customizationType", detectCustomizationType(obj),
+                    "customizationType", detectCustomizationType(user, "container", name, obj),
                     "object", SafeObjectMapper.toSafe(obj)));
         });
 
@@ -222,7 +222,7 @@ public class Main {
             String name = ctx.pathParam("name");
             Object obj = user.getImage(name);
             ctx.json(Map.of("type", "image", "name", name, "definitionLoaded", true,
-                    "customizationType", detectCustomizationType(obj),
+                    "customizationType", detectCustomizationType(user, "image", name, obj),
                     "object", SafeObjectMapper.toSafe(obj)));
         });
 
@@ -635,6 +635,76 @@ public class Main {
     }
 
 
+    private static String detectCustomizationType(ARServerUser user, String objectType, String name, Object obj) {
+        String detected = detectCustomizationType(obj);
+        if (!"Unknown".equals(detected)) return detected;
+
+        String fromDef = detectCustomizationTypeFromDefExport(user, objectType, name);
+        if (!"Unknown".equals(fromDef)) {
+            log.debug("Customization type for {} '{}' detected from DEF fallback: {}", objectType, name, fromDef);
+            return fromDef;
+        }
+        log.debug("Customization type for {} '{}' could not be detected from ARAPI object or DEF fallback", objectType, name);
+        return "Unknown";
+    }
+
+    private static String detectCustomizationTypeFromDefExport(ARServerUser user, String objectType, String name) {
+        if (user == null || name == null || name.isBlank()) return "Unknown";
+        Path tmp = null;
+        try {
+            ExportItem item = new ExportItem();
+            item.objectType = objectType;
+            item.name = name;
+            Object structItem = createStructItemInfo(item);
+            List items = new ArrayList();
+            items.add(structItem);
+            tmp = Files.createTempFile("hlx-customization-", ".def");
+            user.exportDefToFile(items, false, tmp.toString(), true);
+            String defText = Files.exists(tmp) ? Files.readString(tmp) : "";
+            String parsed = parseCustomizationFromDefText(defText);
+            if (!"Unknown".equals(parsed)) return parsed;
+
+            // In classic DEF exports Base objects commonly do not carry object
+            // property 90015 at all. If we successfully exported the exact
+            // object but found no layer marker, treat it as Base rather than
+            // Unknown. Unknown is reserved for cases where we could not inspect
+            // the object/layer metadata at all.
+            if (!defText.isBlank()) return "Base";
+        } catch (Exception e) {
+            log.debug("DEF fallback customization detection failed for {} '{}': {}", objectType, name, rootCause(e).toString());
+        } finally {
+            if (tmp != null) {
+                try { Files.deleteIfExists(tmp); } catch (Exception ignored) { }
+            }
+        }
+        return "Unknown";
+    }
+
+    private static String parseCustomizationFromDefText(String defText) {
+        if (defText == null || defText.isBlank()) return "Unknown";
+        StringBuilder logical = new StringBuilder();
+        boolean collecting = false;
+        for (String rawLine : defText.split("\\R")) {
+            String line = rawLine.strip();
+            if (line.startsWith("object-prop")) {
+                int idx = line.indexOf(':');
+                logical.setLength(0);
+                logical.append(idx >= 0 ? line.substring(idx + 1).trim() : line);
+                collecting = logical.toString().endsWith("\\");
+                String mapped = parseCustomizationFromObjectPropString(logical.toString());
+                if (!"Unknown".equals(mapped)) return mapped;
+                continue;
+            }
+            if (collecting) {
+                logical.append(line);
+                collecting = line.endsWith("\\");
+                String mapped = parseCustomizationFromObjectPropString(logical.toString());
+                if (!"Unknown".equals(mapped)) return mapped;
+            }
+        }
+        return "Unknown";
+    }
+
     private static String detectCustomizationType(Object obj) {
         if (obj == null) return "Unknown";
 
@@ -709,7 +779,7 @@ public class Main {
         String text = String.valueOf(value).trim();
         if (text.isBlank()) return "Unknown";
         String low = text.toLowerCase(Locale.ROOT);
-        if (low.contains("overlay") || low.contains("overlaid") || "1".equals(low)) return "Overlay";
+        if (low.contains("overlay") || low.contains("overlaid") || "1".equals(low) || "2".equals(low)) return "Overlay";
         if (low.contains("custom") || "4".equals(low)) return "Custom";
         if (low.contains("base") || "0".equals(low)) return "Base";
         return "Unknown";

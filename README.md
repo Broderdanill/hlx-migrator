@@ -487,6 +487,12 @@ Copyright © HLX.
 - Compare, Migrate, and Download buttons are disabled until at least one object is selected.
 
 
+## 1.1.10 notes
+
+- Customization Type detection now has a DEF fallback. If ARAPI object reflection does not expose layer metadata, the backend exports the single object to a temporary DEF file and parses the top-level `object-prop` property `90015`.
+- Successfully inspected objects with no `90015` marker are treated as `Base` instead of `Unknown`. `Unknown` is reserved for objects where the layer could not be inspected.
+- Object property `90015` values `1` and `2` are treated as `Overlay`; value `4` is treated as `Custom`.
+
 ## 1.1.9 notes
 
 - Customization Type detection now reads AR System object property `90015` when exposed by ARAPI. DEF exports show this as `object-prop`; sampled values map as `1 = Overlay` and `4 = Custom`.
