@@ -21,7 +21,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.1.8")
+app = FastAPI(title="HLX Migrator", version="1.1.9")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -238,8 +238,9 @@ def _normalize_customization_type(value) -> str:
     low = text.lower()
     mapping = {
         "base": "Base", "0": "Base",
-        "custom": "Custom", "customized": "Custom", "1": "Custom",
-        "overlay": "Overlay", "overlaid": "Overlay", "2": "Overlay",
+        # AR System object property 90015 uses 1=Overlay and 4=Custom in DEF/object-prop metadata.
+        "custom": "Custom", "customized": "Custom", "4": "Custom",
+        "overlay": "Overlay", "overlaid": "Overlay", "1": "Overlay", "2": "Overlay",
         "unknown": "Unknown", "-1": "Unknown",
     }
     return mapping.get(low, text[:1].upper() + text[1:])
@@ -555,7 +556,7 @@ async def health():
         arapi = await ArApiClient().health()
     except Exception as e:
         arapi = {"status": "error", "message": str(e)}
-    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.6", "logLevel": LOG_LEVEL, "arapi": arapi}
+    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.9", "logLevel": LOG_LEVEL, "arapi": arapi}
 
 
 @app.get("/api/environments")

@@ -487,6 +487,12 @@ Copyright © HLX.
 - Compare, Migrate, and Download buttons are disabled until at least one object is selected.
 
 
+## 1.1.9 notes
+
+- Customization Type detection now reads AR System object property `90015` when exposed by ARAPI. DEF exports show this as `object-prop`; sampled values map as `1 = Overlay` and `4 = Custom`.
+- Numeric customization values are no longer treated generically as Base/Custom/Overlay unless they come from the known object property.
+- Objects that still do not expose layer metadata remain `Unknown`.
+
 ## 1.1.8 notes
 
 - Difference calculations now use the same normalization and ignored-key configuration as the Compare dialog.

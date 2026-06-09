@@ -637,6 +637,22 @@ public class Main {
 
     private static String detectCustomizationType(Object obj) {
         if (obj == null) return "Unknown";
+
+        // BMC/AR System stores the customization layer mainly in the object
+        // property list.  In DEF files this is visible as property 90015:
+        //   90015\2\1  => Overlay
+        //   90015\2\4  => Custom
+        // Base objects usually do not carry 90015 at all.
+        for (String method : List.of(
+                "getObjectProperties", "getObjectProps", "getObjProperties",
+                "getProperties", "getPropertyList", "getPropList")) {
+            try {
+                Object value = obj.getClass().getMethod(method).invoke(obj);
+                String mapped = detectCustomizationFromProperties(value);
+                if (!"Unknown".equals(mapped)) return mapped;
+            } catch (Exception ignored) { }
+        }
+
         for (String method : List.of("getCustomizationType", "getCustomization", "getCustomType", "getOverlayType", "getObjPropCustomizationType")) {
             try {
                 Object value = obj.getClass().getMethod(method).invoke(obj);
@@ -663,6 +679,13 @@ public class Main {
             String fromSafe = findCustomizationInSafe(safe, 0);
             if (!"Unknown".equals(fromSafe)) return fromSafe;
         } catch (Exception ignored) { }
+
+        // Naming convention fallback.  Custom objects normally use the __c
+        // suffix.  Do not use this for overlay; overlays usually keep the base
+        // name and must be detected via 90015/properties.
+        String name = reflectString(obj, List.of("getName"));
+        if (name != null && name.endsWith("__c")) return "Custom";
+
         return "Unknown";
     }
 
@@ -671,14 +694,129 @@ public class Main {
         String text = String.valueOf(value).trim();
         if (text.isBlank()) return "Unknown";
         String low = text.toLowerCase(Locale.ROOT);
-        if (low.contains("overlay") || "2".equals(low)) return "Overlay";
-        if (low.contains("custom") || "1".equals(low)) return "Custom";
+        if (low.contains("overlay") || low.contains("overlaid")) return "Overlay";
+        if (low.contains("custom")) return "Custom";
+        if (low.contains("base")) return "Base";
+        // Generic numeric getters differ between ARAPI releases, so only map
+        // the obvious base value here.  Object property 90015 is handled by the
+        // dedicated mapper below where the enum values are known.
+        if ("0".equals(low)) return "Base";
+        return "Unknown";
+    }
+
+    private static String mapCustomizationObjectPropertyValue(Object value) {
+        if (value == null) return "Unknown";
+        String text = String.valueOf(value).trim();
+        if (text.isBlank()) return "Unknown";
+        String low = text.toLowerCase(Locale.ROOT);
+        if (low.contains("overlay") || low.contains("overlaid") || "1".equals(low)) return "Overlay";
+        if (low.contains("custom") || "4".equals(low)) return "Custom";
         if (low.contains("base") || "0".equals(low)) return "Base";
         return "Unknown";
     }
 
+    private static String detectCustomizationFromProperties(Object props) {
+        if (props == null) return "Unknown";
+
+        // If a PropList has a direct getter for property 90015, try it.
+        for (String method : List.of("get", "getValue", "getProperty", "getProp")) {
+            try {
+                Method m = props.getClass().getMethod(method, int.class);
+                Object value = m.invoke(props, 90015);
+                String mapped = mapCustomizationObjectPropertyValue(extractPropertyValue(value));
+                if (!"Unknown".equals(mapped)) return mapped;
+            } catch (Exception ignored) { }
+            try {
+                Method m = props.getClass().getMethod(method, Integer.class);
+                Object value = m.invoke(props, Integer.valueOf(90015));
+                String mapped = mapCustomizationObjectPropertyValue(extractPropertyValue(value));
+                if (!"Unknown".equals(mapped)) return mapped;
+            } catch (Exception ignored) { }
+            try {
+                Method m = props.getClass().getMethod(method, String.class);
+                Object value = m.invoke(props, "90015");
+                String mapped = mapCustomizationObjectPropertyValue(extractPropertyValue(value));
+                if (!"Unknown".equals(mapped)) return mapped;
+            } catch (Exception ignored) { }
+        }
+
+        String fromSafe = findCustomizationProperty90015(SafeObjectMapper.toSafe(props), 0);
+        if (!"Unknown".equals(fromSafe)) return fromSafe;
+
+        String asText = String.valueOf(props);
+        return parseCustomizationFromObjectPropString(asText);
+    }
+
+    private static Object extractPropertyValue(Object obj) {
+        if (obj == null) return null;
+        for (String method : List.of("getValue", "getVal", "getPropertyValue", "getData", "getObjectValue")) {
+            try {
+                return obj.getClass().getMethod(method).invoke(obj);
+            } catch (Exception ignored) { }
+        }
+        return obj;
+    }
+
+    private static String parseCustomizationFromObjectPropString(String text) {
+        if (text == null || text.isBlank()) return "Unknown";
+        // DEF/object-prop encoding: <count>\<propId>\<dataType>\<value>\...
+        // Example from Developer Studio export:
+        //   object-prop : 3\60025\2\1\90015\2\1\90002...
+        String[] parts = text.split("\\\\");
+        for (int i = 0; i + 2 < parts.length; i++) {
+            if ("90015".equals(parts[i].trim())) {
+                return mapCustomizationObjectPropertyValue(parts[i + 2]);
+            }
+        }
+        return "Unknown";
+    }
+
+    private static String findCustomizationProperty90015(Object safe, int depth) {
+        if (safe == null || depth > 8) return "Unknown";
+        if (safe instanceof Map<?,?> map) {
+            if (map.containsKey("90015")) {
+                String mapped = mapCustomizationObjectPropertyValue(extractPropertyValue(map.get("90015")));
+                if (!"Unknown".equals(mapped)) return mapped;
+            }
+            Object tag = firstByKey(map, "propertyTag", "propertyId", "propId", "id", "key");
+            if (tag != null && "90015".equals(String.valueOf(tag).trim())) {
+                Object value = firstByKey(map, "value", "val", "propertyValue", "data", "objectValue");
+                String mapped = mapCustomizationObjectPropertyValue(value);
+                if (!"Unknown".equals(mapped)) return mapped;
+            }
+            for (Map.Entry<?,?> e : map.entrySet()) {
+                String key = String.valueOf(e.getKey()).trim();
+                if ("90015".equals(key)) {
+                    String mapped = mapCustomizationObjectPropertyValue(extractPropertyValue(e.getValue()));
+                    if (!"Unknown".equals(mapped)) return mapped;
+                }
+                String mapped = findCustomizationProperty90015(e.getValue(), depth + 1);
+                if (!"Unknown".equals(mapped)) return mapped;
+            }
+        } else if (safe instanceof Iterable<?> list) {
+            for (Object value : list) {
+                String mapped = findCustomizationProperty90015(value, depth + 1);
+                if (!"Unknown".equals(mapped)) return mapped;
+            }
+        } else if (safe instanceof String str) {
+            return parseCustomizationFromObjectPropString(str);
+        }
+        return "Unknown";
+    }
+
+    private static Object firstByKey(Map<?,?> map, String... names) {
+        for (String name : names) {
+            for (Map.Entry<?,?> e : map.entrySet()) {
+                if (name.equalsIgnoreCase(String.valueOf(e.getKey()))) return e.getValue();
+            }
+        }
+        return null;
+    }
+
     private static String findCustomizationInSafe(Object safe, int depth) {
-        if (safe == null || depth > 6) return "Unknown";
+        if (safe == null || depth > 8) return "Unknown";
+        String fromProp = findCustomizationProperty90015(safe, depth + 1);
+        if (!"Unknown".equals(fromProp)) return fromProp;
         if (safe instanceof Map<?,?> map) {
             for (Map.Entry<?,?> e : map.entrySet()) {
                 String key = String.valueOf(e.getKey()).toLowerCase(Locale.ROOT);
@@ -696,6 +834,8 @@ public class Main {
                 String mapped = findCustomizationInSafe(value, depth + 1);
                 if (!"Unknown".equals(mapped)) return mapped;
             }
+        } else if (safe instanceof String str) {
+            return parseCustomizationFromObjectPropString(str);
         }
         return "Unknown";
     }
