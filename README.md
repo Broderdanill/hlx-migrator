@@ -487,6 +487,13 @@ Copyright © HLX.
 - Compare, Migrate, and Download buttons are disabled until at least one object is selected.
 
 
+
+## 1.1.11 notes
+
+- Replaced the Customization Type multi-select with a compact dropdown chip to reduce filter-bar clutter.
+- Optimized result table rendering for large datasets by using fixed table layout, containment hints, and lighter Details button handling.
+- Result rows now avoid embedding full row JSON in inline click handlers, which improves perceived responsiveness when paging through large Differences lists.
+
 ## 1.1.10 notes
 
 - Customization Type detection now has a DEF fallback. If ARAPI object reflection does not expose layer metadata, the backend exports the single object to a temporary DEF file and parses the top-level `object-prop` property `90015`.
