@@ -41,6 +41,8 @@ _DEFAULT_SYNC = {
     "menus": True,
     "active_link_guides": True,
     "filter_guides": True,
+    "web_services": True,
+    "associations": True,
     "packing_lists": True,
     "applications": True,
     "containers": False,
@@ -58,7 +60,7 @@ _DEFAULT_SYNC = {
     "purge_missing": False,
     "detail_object_types": [
         "form", "active_link", "filter", "escalation", "menu",
-        "active_link_guide", "filter_guide", "packing_list", "application", "image"
+        "active_link_guide", "filter_guide", "web_service", "association", "packing_list", "application", "image"
     ],
 }
 

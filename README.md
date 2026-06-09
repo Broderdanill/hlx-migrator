@@ -391,6 +391,8 @@ sync:
     escalations: true
 
     menus: true
+    web_services: true
+    associations: true
 
     containers: true
     images: true
@@ -569,3 +571,22 @@ UI layout polish:
 - Result rows are more compact for high-volume object lists.
 - Scrollbars are styled to match the dark UI.
 - Object type navigation now uses compact monochrome icons inspired by Developer Studio categories.
+
+
+## 1.1.21
+
+- Clear View in Status / Activity Log now hides already-cleared server events persistently, so opening Sync Status does not re-populate old log rows.
+- Browser polling is less aggressive when sync is idle and avoids unnecessary re-rendering of navigation, counters and job lists.
+- The UI now shows a clearer current sync step while background sync is running, so long startup syncs feel active instead of frozen.
+- Result tables show a lightweight loading state during object/difference fetches.
+
+
+### 1.1.21
+
+- Added Web Services as a first-class object type. They are detected from AR System containers where the container type is 5, matching DEF exports that use `begin container` with `type : 5`.
+- Added Associations as a first-class object type. The Java ARAPI service uses reflection for association list/detail calls so it can work across ARAPI versions where the exact method signature differs.
+- Browse, Differences, Sync Status, counts, Details, DEF export/migration payloads and the left object tree now include Web Services and Associations.
+
+
+## Recent changes
+- **1.1.22**: Made result-table rows even more compact for high-volume object lists, with tighter cells, checkboxes, and row action buttons.

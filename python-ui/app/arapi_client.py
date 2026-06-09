@@ -141,6 +141,12 @@ class ArApiClient:
             self._raise_for_status_with_body(r)
             return r.json()
 
+    async def associations(self, session_id: str) -> dict:
+        async with httpx.AsyncClient(timeout=240) as client:
+            r = await client.get(f"{self.base_url}/metadata/associations", headers=self._headers(session_id))
+            self._raise_for_status_with_body(r)
+            return r.json()
+
     async def images(self, session_id: str) -> dict:
         async with httpx.AsyncClient(timeout=240) as client:
             r = await client.get(f"{self.base_url}/metadata/images", headers=self._headers(session_id))
@@ -160,6 +166,8 @@ class ArApiClient:
             "filter_guide": "containers",
             "packing_list": "containers",
             "application": "containers",
+            "web_service": "containers",
+            "association": "associations",
             "other_container": "containers",
         }
         endpoint = endpoint_map.get(object_type)

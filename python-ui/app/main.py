@@ -21,7 +21,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.1.18")
+app = FastAPI(title="HLX Migrator", version="1.1.21")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -37,7 +37,7 @@ SERVER_SESSIONS: dict[str, str] = {}
 ENV_LOCKS: dict[str, dict] = {}
 LOCK_GUARD = asyncio.Lock()
 DIFFERENCE_CACHE: dict[str, dict] = {}
-DIFF_OBJECT_TYPES = ["form", "active_link", "filter", "menu", "escalation", "active_link_guide", "filter_guide", "packing_list", "application", "image"]
+DIFF_OBJECT_TYPES = ["form", "active_link", "filter", "menu", "escalation", "active_link_guide", "filter_guide", "web_service", "association", "packing_list", "application", "image"]
 
 
 def _lock_public() -> dict:
@@ -502,7 +502,7 @@ async def server_cache_refresh_environment(env: str, set_global_running: bool = 
 
         workflow_enabled = any(sync_cfg.get(k, False) for k in (
             "active_links", "filters", "menus", "escalations", "images",
-            "active_link_guides", "filter_guides", "packing_lists", "applications", "containers",
+            "active_link_guides", "filter_guides", "web_services", "associations", "packing_lists", "applications", "containers",
         ))
         if workflow_enabled:
             add_job(env, "workflow", "running", "Reading workflow object indexes related to scoped forms")
@@ -698,7 +698,7 @@ def list_cached_objects_api(
     limit/offset paging and returns total counts for navigation. Metadata
     columns are still computed from the rows in the requested page only.
     """
-    allowed = {"form", "active_link", "filter", "escalation", "menu", "image", "active_link_guide", "filter_guide", "packing_list", "application", "other_container"}
+    allowed = {"form", "active_link", "filter", "escalation", "menu", "image", "active_link_guide", "filter_guide", "web_service", "association", "packing_list", "application", "other_container"}
     if object_type not in allowed:
         raise HTTPException(status_code=400, detail=f"Unsupported object type: {object_type}")
     if environment not in config_store.environments():
@@ -995,7 +995,7 @@ def diff_forms(source: str, target: str, source_session_id: str | None = None, t
 
 @app.get("/api/diff/{object_type}")
 def diff_object_type(object_type: str, source: str, target: str, source_session_id: str | None = None, target_session_id: str | None = None, service_cache: bool = False):
-    allowed = {"form", "active_link", "filter", "escalation", "menu", "image", "active_link_guide", "filter_guide", "packing_list", "application", "other_container"}
+    allowed = {"form", "active_link", "filter", "escalation", "menu", "image", "active_link_guide", "filter_guide", "web_service", "association", "packing_list", "application", "other_container"}
     if object_type not in allowed:
         raise HTTPException(status_code=400, detail=f"Unsupported object type: {object_type}")
     src_ns = source if service_cache else cache_namespace(source, source_session_id)

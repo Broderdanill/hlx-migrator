@@ -10,7 +10,7 @@
     *{box-sizing:border-box} body{margin:0;background:#082138;color:var(--text);font:12px/1.18 Segoe UI,system-ui,-apple-system,sans-serif;scrollbar-color:#165a9b #061827;scrollbar-width:thin} *{scrollbar-color:#165a9b #061827;scrollbar-width:thin}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-track{background:#061827;border-radius:999px}::-webkit-scrollbar-thumb{background:#165a9b;border:2px solid #061827;border-radius:999px}::-webkit-scrollbar-thumb:hover{background:#00b9f6}::-webkit-scrollbar-corner{background:#061827} button,select,input{font:inherit;border:1px solid var(--line2);border-radius:7px;background:#082138;color:var(--text);padding:4px 8px;min-height:28px} button{cursor:pointer;background:#165a9b;transition:background-color .12s ease,border-color .12s ease,color .12s ease;box-shadow:none}button:hover{background:#0e3b65;border-color:#00b9f6}button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.35);box-shadow:none!important}button:disabled:hover{background:#165a9b;border-color:var(--line2)}button.primary{background:#165a9b;border-color:#00b9f6;color:white}button.primary:hover{background:#0e3b65;border-color:#00b9f6}button.danger{background:#3b1210;border-color:#ab0d02;color:#ffd7d4}button.ghost{background:transparent}.ok{color:var(--ok);font-weight:700}.warn{color:var(--warn);font-weight:700}.bad{color:var(--bad);font-weight:700}.muted{color:var(--muted)}.small{font-size:11.5px}.mono{font-family:ui-monospace,Consolas,monospace}.hidden{display:none!important}.sync-active{animation:syncPulse 1.25s ease-in-out infinite;border-color:#ffcc33!important;color:#fff;background:#165a9b!important}@keyframes syncPulse{0%{box-shadow:0 0 0 rgba(255,204,51,0)}50%{box-shadow:0 0 16px rgba(255,204,51,.55)}100%{box-shadow:0 0 0 rgba(255,204,51,0)}}
     header{height:52px;background:#082138;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line);box-shadow:var(--shadow)}.brand{display:flex;align-items:center;gap:10px}.app-icon{width:36px;height:36px;border-radius:50%;object-fit:cover;border:0;box-shadow:0 0 14px rgba(0,185,246,.24)} h1{font-size:17px;margin:0}.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.layout{display:grid;grid-template-columns:285px 1fr;min-height:calc(100vh - 52px)} aside{border-right:1px solid var(--line);background:rgba(10,18,31,.94);display:flex;flex-direction:column}.side-head{padding:10px 12px;border-bottom:1px solid var(--line);background:#082138}.env-pair{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center}.env-pair select{width:100%;min-width:0}.arrow{color:var(--accent);font-weight:800;font-size:18px;text-align:center}.tree button{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;border-bottom:1px solid #0e3b65;border-radius:0;background:transparent;padding:5px 10px;text-align:left;min-height:29px}.tree button.active{background:#165a9b;color:white;border-left:3px solid var(--accent);padding-left:7px}.tree-label{display:flex;align-items:center;gap:8px;min-width:0}.tree-icon{width:17px;height:17px;border:1px solid rgba(0,185,246,.45);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;color:#9ee7ff;background:rgba(0,185,246,.08);flex:0 0 auto}.tree-icon svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tree-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.badge{min-width:21px;text-align:center;border-radius:999px;background:#165a9b;padding:1px 7px;color:#f7f7f7}.main{padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}.panel{background:rgba(17,28,47,.94);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}.panel-pad{padding:10px}.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pill{display:inline-flex;gap:5px;align-items:center;border:1px solid var(--line2);border-radius:999px;padding:3px 9px;background:#082138;color:#f7f7f7}.metric{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid #1a2a44}.env-menu{position:absolute;right:14px;top:62px;width:min(920px,calc(100vw - 28px));max-height:70vh;overflow:auto;background:#082138;border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow);z-index:9;padding:12px}.env-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}.env-card{background:#092943;border:1px solid var(--line);border-radius:10px;padding:10px}.login-panel{display:none}.login-panel.open{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:72px 24px 24px;background:rgba(0,0,0,.64);backdrop-filter:blur(3px);z-index:28}.login-modal-card{width:min(980px,calc(100vw - 40px));max-height:calc(100vh - 100px);overflow:auto;background:#082138;border:1px solid var(--line2);border-radius:14px;box-shadow:0 25px 80px rgba(0,0,0,.75)}.login-env{border:1px solid var(--line);border-radius:12px;background:#092943;padding:12px;margin-top:10px}.login-env h3{margin:0}.login-env .row{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) minmax(140px,1fr) auto auto;gap:8px;align-items:end}.login-env label{display:block}.login-env input{width:100%}.modal-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.modal-form label{display:block}.modal-form input,.modal-form select,textarea.modal-textarea{width:100%}.modal-wide{grid-column:1/-1}textarea.modal-textarea{min-height:90px;resize:vertical}@media(max-width:850px){.login-env .row,.modal-form{grid-template-columns:1fr}}
     .filter-main-row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}.name-filter{min-width:280px;max-width:520px;flex:1}.action-buttons{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.filter-sub-row{display:flex;align-items:center;gap:7px;margin-top:7px;flex-wrap:wrap}.filter-toggle{display:inline-flex;align-items:center;gap:6px}.filter-count{background:#165a9b;color:#fff;border-radius:999px;padding:1px 6px;font-size:11px}.advanced-filters{margin-top:7px;padding:8px;border:1px solid var(--line);border-radius:9px;background:#082138;display:flex;gap:8px;align-items:end;flex-wrap:wrap}.advanced-filters input{min-width:185px}.filter-field{display:flex;flex-direction:column;gap:3px;min-width:185px}.filter-field .field-label{line-height:1;color:var(--muted)}.filter-field input{width:100%}.ct-filter{display:flex;flex-direction:column;gap:3px;min-width:185px}.compact-ct-filter{align-self:flex-end;margin-bottom:0}.ct-dropdown{position:relative;display:inline-flex}.ct-dropdown-button{width:100%;min-width:185px;max-width:260px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:24px}.ct-dropdown-menu{position:absolute;left:0;top:calc(100% + 6px);min-width:210px;background:#082138;border:1px solid var(--line2);border-radius:10px;box-shadow:var(--shadow);padding:6px;z-index:20}.ct-dropdown-menu label{display:flex!important;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;cursor:pointer;color:var(--text)}.ct-dropdown-menu label:hover{background:#0e3b65}.ct-dropdown-menu input{min-width:0}.selected-badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line2);border-radius:999px;padding:3px 9px;background:#082138;color:#f7f7f7;max-width:720px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}@media(max-width:900px){.name-filter{min-width:100%;max-width:none}.action-buttons{width:100%}}
-    .content-grid{display:block;min-height:0;flex:1;overflow:hidden;contain:layout size}.table-wrap{overflow:auto;height:100%;max-height:none;border-radius:10px;border:1px solid var(--line);contain:layout paint}.result-table{width:100%;min-width:980px;border-collapse:collapse;table-layout:fixed}th{position:sticky;top:0;background:#082138;z-index:1;color:#f7f7f7}th,td{padding:0 6px;border-bottom:1px solid #1b2c47;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:22px;line-height:1.05}.resizable-table th{position:sticky}.resizable-table th.col-resizable{padding-right:12px}.resize-handle{position:absolute;right:0;top:0;width:8px;height:100%;cursor:col-resize;user-select:none;touch-action:none}.resize-handle:hover,.resize-handle.active{background:rgba(0,185,246,.28)}body.col-resizing{cursor:col-resize;user-select:none}.name-cell{font-weight:500}.table-wrap button{min-height:20px;padding:1px 6px;border-radius:6px}.table-wrap input[type="checkbox"]{width:13px;height:13px;vertical-align:middle}tbody tr{content-visibility:auto;contain-intrinsic-size:22px;height:22px}tbody tr:nth-child(even){background:#092943}tbody tr:hover{background:var(--hover)}tbody tr.selected{background:var(--sel)}.name-link{cursor:pointer;color:#ddebff}.name-link:hover{text-decoration:underline}.status-badge{cursor:pointer}.s-equal{color:var(--ok);font-weight:700}.s-different{color:var(--diff);font-weight:700}.s-missing_in_source,.s-missing_in_target{color:var(--bad);font-weight:700}.s-not_compared{color:var(--muted)} .detail pre{white-space:pre-wrap;word-break:break-word;max-height:47vh;overflow:auto;background:#07101d;border:1px solid #1b2c47;border-radius:8px;padding:8px}
+    .content-grid{display:block;min-height:0;flex:1;overflow:hidden;contain:layout size}.table-wrap{overflow:auto;height:100%;max-height:none;border-radius:10px;border:1px solid var(--line);contain:layout paint}.result-table{width:100%;min-width:980px;border-collapse:collapse;table-layout:fixed;font-size:11.5px}th{position:sticky;top:0;background:#082138;z-index:1;color:#f7f7f7}th,td{padding:0 5px;border-bottom:1px solid #1b2c47;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:18px;line-height:1}.resizable-table th{position:sticky}.resizable-table th.col-resizable{padding-right:12px}.resize-handle{position:absolute;right:0;top:0;width:8px;height:100%;cursor:col-resize;user-select:none;touch-action:none}.resize-handle:hover,.resize-handle.active{background:rgba(0,185,246,.28)}body.col-resizing{cursor:col-resize;user-select:none}.name-cell{font-weight:500}.table-wrap button{min-height:20px;padding:1px 6px;border-radius:6px}.table-wrap input[type="checkbox"]{width:13px;height:13px;vertical-align:middle}tbody tr{content-visibility:auto;contain-intrinsic-size:22px;height:22px}tbody tr:nth-child(even){background:#092943}tbody tr:hover{background:var(--hover)}tbody tr.selected{background:var(--sel)}.name-link{cursor:pointer;color:#ddebff}.name-link:hover{text-decoration:underline}.status-badge{cursor:pointer}.s-equal{color:var(--ok);font-weight:700}.s-different{color:var(--diff);font-weight:700}.s-missing_in_source,.s-missing_in_target{color:var(--bad);font-weight:700}.s-not_compared{color:var(--muted)} .detail pre{white-space:pre-wrap;word-break:break-word;max-height:47vh;overflow:auto;background:#07101d;border:1px solid #1b2c47;border-radius:8px;padding:8px}
     .detail-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}
     .detail-tabs{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
     .detail-tabs button.active{background:#165a9b;border-color:#00b9f6}
@@ -124,6 +124,11 @@
     .table-pager{margin:0;gap:8px;align-items:center}
     .table-pager select{height:28px}
     .table-wrap{overflow:auto;min-height:0}
+
+    /* 1.1.20: responsive feedback and lower-cost table updates. */
+    .table-wrap.loading{position:relative;opacity:.88}
+    .table-wrap.loading::after{content:"Loading…";position:absolute;right:12px;top:10px;padding:4px 10px;border-radius:999px;background:rgba(0,185,246,.14);border:1px solid rgba(0,185,246,.34);color:#dceafa;font-size:11px;letter-spacing:.02em;pointer-events:none}
+    .sync-current-step{margin-top:8px;padding:7px 9px;border:1px solid rgba(0,185,246,.22);border-radius:9px;background:rgba(0,185,246,.06);color:#dceafa}
 </style>
 </head>
 <body>
@@ -138,7 +143,7 @@
 </header>
 <div id="envMenu" class="env-menu hidden">
   <div class="toolbar"><strong>Sync Status</strong><div class="row"><button onclick="serverSyncAll()">Sync All</button><button class="ghost" title="Close" onclick="toggleEnvMenu()">×</button></div></div>
-  <div id="envCards" class="env-grid" style="margin-top:10px"></div>
+  <div id="syncCurrentStep" class="sync-current-step small muted">No sync running.</div><div id="envCards" class="env-grid" style="margin-top:10px"></div>
 </div>
 <div id="loginPanel" class="login-panel" onclick="if(event.target.id==='loginPanel')toggleLogin()">
   <div class="login-modal-card panel-pad" onclick="event.stopPropagation()">
@@ -264,10 +269,10 @@
   </div>
 </div>
 <script>
-const TYPE_LABEL={form:'Forms',active_link:'Active Links',filter:'Filters',escalation:'Escalations',menu:'Menus',active_link_guide:'Active Link Guides',filter_guide:'Filter Guides',packing_list:'Packing Lists',application:'Applications',image:'Images'};
-const TYPE_TO_EXPORT={form:1,active_link:2,filter:3,escalation:4,menu:5,active_link_guide:6,filter_guide:6,packing_list:6,application:6,image:7};
-const TYPES=['form','active_link','filter','menu','escalation','active_link_guide','filter_guide','packing_list','application','image'];
-const state={envs:[],scope:{},sync:{},cache:{},serverCache:{},sessions:JSON.parse(sessionStorage.getItem('hlx.sessions')||'{}'),source:sessionStorage.getItem('hlx.sourceEnv')||'',target:sessionStorage.getItem('hlx.targetEnv')||'',type:'form',mode:'browse',objects:[],compare:null,selected:[],statusFilter:'',sortKey:'name',sortDir:'asc',pageSize:100,offset:0,total:0,loadingObjects:false,searchTimer:null,filters:{name:'',changedBy:'',changedFrom:'',changedTo:'',customizationTypes:[]},showAdvancedFilters:false,diff:null,viewMode:'browse'};
+const TYPE_LABEL={form:'Forms',active_link:'Active Links',filter:'Filters',escalation:'Escalations',menu:'Menus',active_link_guide:'Active Link Guides',filter_guide:'Filter Guides',web_service:'Web Services',association:'Associations',packing_list:'Packing Lists',application:'Applications',image:'Images'};
+const TYPE_TO_EXPORT={form:1,active_link:2,filter:3,escalation:4,menu:5,active_link_guide:6,filter_guide:6,web_service:6,association:0,packing_list:6,application:6,image:7};
+const TYPES=['form','active_link','filter','menu','escalation','active_link_guide','filter_guide','web_service','association','packing_list','application','image'];
+const state={envs:[],scope:{},sync:{},cache:{},serverCache:{},sessions:JSON.parse(sessionStorage.getItem('hlx.sessions')||'{}'),source:sessionStorage.getItem('hlx.sourceEnv')||'',target:sessionStorage.getItem('hlx.targetEnv')||'',type:'form',mode:'browse',objects:[],compare:null,selected:[],statusFilter:'',sortKey:'name',sortDir:'asc',pageSize:100,offset:0,total:0,loadingObjects:false,refreshingAll:false,refreshTimer:null,lastEnvSig:'',lastCacheSig:'',lastJobsSig:'',logClearedAt:Number(localStorage.getItem('hlx.logClearedAt')||0),searchTimer:null,filters:{name:'',changedBy:'',changedFrom:'',changedTo:'',customizationTypes:[]},showAdvancedFilters:false,diff:null,viewMode:'browse'};
 let dialogResolver=null;
 let busyDepth=0;
 function beginBusy(title='Working...', detail='Please wait.'){
@@ -357,8 +362,39 @@ function saveSessions(){sessionStorage.setItem('hlx.sessions',JSON.stringify(sta
 function renderHeader(){const active=Object.entries(state.sessions).filter(([e,s])=>s && s.valid!==false);const stale=Object.entries(state.sessions).filter(([e,s])=>s && s.valid===false);const activeText=active.map(([e,s])=>`${e}: ${s.user}`).join(' | ');const staleText=stale.length?` · stale: ${stale.map(([e])=>e).join(', ')}`:'';sessionHeader.textContent=(activeText||'No browser sessions')+staleText;const modeLabel=state.mode==='compare'?'Compare':state.mode==='differences'?'Differences':'Browse source';modeHeader.textContent=`${(state.source||'-').toUpperCase()} → ${(state.target||'-').toUpperCase()} · ${modeLabel}`;document.getElementById('browseModeBtn')?.classList.toggle('active',state.mode!=='differences');document.getElementById('diffModeBtn')?.classList.toggle('active',state.mode==='differences')}
 async function validateStoredSessions(){const entries=Object.entries(state.sessions);if(!entries.length)return;let changed=false;for(const [env,s] of entries){if(!s?.sessionId)continue;try{const r=await api('/api/session/validate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:s.sessionId})});if(r.valid){state.sessions[env]={...s,valid:true};}else{state.sessions[env]={...s,valid:false,expiredMessage:r.message||'Session expired'};}changed=true;}catch(e){state.sessions[env]={...s,valid:false,expiredMessage:e.message};changed=true;}}if(changed)saveSessions()}
 function toggleLogin(){loginPanel.classList.toggle('open')} function toggleEnvMenu(){envMenu.classList.toggle('hidden')}
-async function init(){applyColumnWidths();renderTree();await refreshAll();await validateStoredSessions();if(!state.source)state.source=state.envs[0]||'';if(!state.target)state.target=state.envs[1]||state.envs[0]||'';renderSelects();renderLogin();renderHeader();renderScope();await loadSourceObjects();setInterval(refreshAll,5000)}
-async function refreshAll(){try{const e=await api('/api/environments');state.envs=e.environments;state.scope=e.scope||{};state.sync=e.sync||{};state.serverCache=e.serverCache||{};const c=await api('/api/cache/summary');state.cache=c.environments||{};renderSelects();renderTree();renderCards();renderJobs();renderScope();renderHeader();document.getElementById('syncStatusBtn')?.classList.toggle('sync-active', !!state.serverCache.running || Object.keys(state.serverCache.locks||{}).length>0);setStatus(state.serverCache.running?'Server sync is running...':'Ready')}catch(err){setStatus(err.message)}}
+async function init(){applyColumnWidths();renderTree();await refreshAll(true);await validateStoredSessions();if(!state.source)state.source=state.envs[0]||'';if(!state.target)state.target=state.envs[1]||state.envs[0]||'';renderSelects();renderLogin();renderHeader();renderScope();await loadSourceObjects();scheduleRefresh()}
+function scheduleRefresh(delay){
+  clearTimeout(state.refreshTimer);
+  const active=!!state.serverCache.running || Object.keys(state.serverCache.locks||{}).length>0;
+  state.refreshTimer=setTimeout(()=>refreshAll(false).finally(()=>scheduleRefresh()), delay || (active?2500:9000));
+}
+function latestJobText(){
+  const jobsData=state.serverCache.jobs||[];
+  const latest=jobsData.find(j=>j.status==='running') || jobsData[0];
+  if(!latest)return 'No sync running.';
+  const env=latest.environment&&latest.environment!=='all'?latest.environment.toUpperCase():'All environments';
+  return `${env}: ${latest.objectType||'sync'} — ${latest.message||latest.status||''}`;
+}
+async function refreshAll(initial=false){
+  if(state.refreshingAll)return;
+  state.refreshingAll=true;
+  try{
+    const e=await api('/api/environments');
+    state.envs=e.environments; state.scope=e.scope||{}; state.sync=e.sync||{}; state.serverCache=e.serverCache||{};
+    const envSig=JSON.stringify({envs:state.envs,scope:state.scope,sync:state.sync,running:state.serverCache.running,locks:state.serverCache.locks});
+    if(initial || envSig!==state.lastEnvSig){renderSelects();renderCards();renderScope();renderHeader();state.lastEnvSig=envSig;}
+    const c=await api('/api/cache/summary');
+    state.cache=c.environments||{};
+    const cacheSig=JSON.stringify(state.cache);
+    if(initial || cacheSig!==state.lastCacheSig){renderTree();state.lastCacheSig=cacheSig;}
+    renderJobs();
+    const active=!!state.serverCache.running || Object.keys(state.serverCache.locks||{}).length>0;
+    document.getElementById('syncStatusBtn')?.classList.toggle('sync-active', active);
+    const step=document.getElementById('syncCurrentStep'); if(step)step.textContent=active?latestJobText():'No sync running.';
+    if(active){setStatus(`Sync running — ${latestJobText()}`);} else if(!state.loadingObjects && busyDepth===0 && (initial || statusText.textContent==='Starting...' || statusText.textContent.startsWith('Sync running'))){setStatus('Ready');}
+  }catch(err){setStatus(err.message)}
+  finally{state.refreshingAll=false;}
+}
 function renderSelects(){for(const el of [sourceEnv,targetEnv]){const sel=el.id==='sourceEnv'?state.source:state.target;el.innerHTML=state.envs.map(e=>`<option ${e===sel?'selected':''}>${e.toUpperCase()}</option>`).join('')}}
 function savePair(){state.source=sourceEnv.value.toLowerCase();state.target=targetEnv.value.toLowerCase();sessionStorage.setItem('hlx.sourceEnv',state.source);sessionStorage.setItem('hlx.targetEnv',state.target);renderHeader()}
 function allCustomizationTypes(){return ['Base','Custom','Overlay','Unknown']}
@@ -418,6 +454,8 @@ function objectTypeIcon(t){
     escalation:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>',
     active_link_guide:'<svg viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/><path d="M8 6v12"/></svg>',
     filter_guide:'<svg viewBox="0 0 24 24"><path d="M4 5h16l-5 6v6l-6 2v-8z"/><path d="M8 8h8"/></svg>',
+    web_service:'<svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/><path d="M7 4v16M17 4v16"/></svg>',
+    association:'<svg viewBox="0 0 24 24"><path d="M7 8h10M7 16h10"/><circle cx="5" cy="8" r="2"/><circle cx="19" cy="16" r="2"/></svg>',
     packing_list:'<svg viewBox="0 0 24 24"><path d="M8 6h11v14H5V9z"/><path d="M8 6v3H5"/><path d="M9 12h6M9 16h6"/></svg>',
     application:'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>',
     image:'<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M7 16l4-4 3 3 2-2 3 3"/><circle cx="9" cy="9" r="1.5"/></svg>'
@@ -434,7 +472,16 @@ function renderTree(){
   }).join('')
 }
 function renderCards(){envCards.innerHTML=state.envs.map(env=>{const s=state.serverCache.environments?.[env]||{};const lock=state.serverCache.locks?.[env];const counts=state.cache[env]||{};const rows=Object.entries(counts).sort().map(([t,v])=>`<div class="metric"><span>${TYPE_LABEL[t]||t}</span><span title="${v.count}">${compactCount(v.count)} <span class="muted">${fmtDate(v.lastSeen)}</span></span></div>`).join('')||'<div class="muted">No cache yet</div>';const lockHtml=lock?`<div class="pill warn" style="margin:7px 0">Locked: ${html(lock.operation)} by ${html(lock.owner)} since ${fmtDate(lock.startedAt)}</div>`:'';return `<div class="env-card"><div class="toolbar"><h3>${env.toUpperCase()} <span class="${s.status==='ok'?'ok':s.status==='error'?'bad':'warn'}">${s.status||'pending'}</span></h3><button onclick="serverSyncEnv('${env}')" ${lock?'disabled title="Environment is locked"':''}>Server Sync</button></div>${lockHtml}<div class="small muted">Server: ${s.serverVersion||'-'}<br>User: ${s.user||'-'}<br>Last sync: ${fmtDate(s.finishedAt)}<br>Mode: ${s.lastSyncMode||'-'}</div><div class="small" style="margin:7px 0">Scope: ${(s.scope?.include_form_prefixes||state.scope.include_form_prefixes||[]).join(', ')||'-'}</div>${rows}</div>`}).join('')}
-function renderJobs(){const jobsData=state.serverCache.jobs||[];const htmlRows=jobsData.slice(0,100).map(j=>`<div class="log-row"><span>${fmtDate(j.time)}</span><span>${j.environment}</span><span class="${j.status==='ok'?'ok':j.status==='error'?'bad':'warn'}">${j.status}</span><span>${j.objectType}: ${j.message} ${j.counts?html(JSON.stringify(j.counts)):''}</span></div>`).join('');const menu=document.getElementById('jobsMenu');if(menu)menu.innerHTML=htmlRows;jobs.innerHTML=htmlRows||'<div class="muted">No events yet</div>'}
+function renderJobs(){
+  const allJobs=state.serverCache.jobs||[];
+  const jobsData=allJobs.filter(j=>!state.logClearedAt || Date.parse(j.time||0)>state.logClearedAt);
+  const sig=JSON.stringify(jobsData.slice(0,80).map(j=>[j.time,j.environment,j.objectType,j.status,j.message,j.counts]));
+  if(sig===state.lastJobsSig)return;
+  state.lastJobsSig=sig;
+  const htmlRows=jobsData.slice(0,100).map(j=>`<div class="log-row"><span>${fmtDate(j.time)}</span><span>${j.environment}</span><span class="${j.status==='ok'?'ok':j.status==='error'?'bad':'warn'}">${j.status}</span><span>${j.objectType}: ${j.message} ${j.counts?html(JSON.stringify(j.counts)):''}</span></div>`).join('');
+  const menu=document.getElementById('jobsMenu');if(menu)menu.innerHTML=htmlRows;
+  jobs.innerHTML=htmlRows||'<div class="muted">No new events. Clear View only hides events that existed when it was clicked.</div>';
+}
 function renderLogin(){loginGrid.innerHTML=state.envs.map(env=>{const id=safeId(env),s=state.sessions[env];const valid=s&&s.valid!==false;const label=s?(valid?'logged in':'session expired'):'not logged in';const cls=s?(valid?'ok':'warn'):'bad';return `<div class="login-env"><div class="toolbar"><h3>${env.toUpperCase()} <span class="${cls}">${label}</span></h3></div>${s&&s.valid===false?`<div class="small warn">Session is stale. Log in again before migration.</div>`:''}<div class="row"><label>User<br><input id="u_${id}" value="${s?.user||''}"></label><label>Password<br><input id="p_${id}" type="password"></label><label>Auth<br><input id="a_${id}"></label><button onclick="loginEnv('${env}')" class="primary">Log in</button><button onclick="logoutEnv('${env}')" class="danger">Log out</button></div></div>`}).join('')}
 async function loginEnv(env){const id=safeId(env);const body={username:document.getElementById('u_'+id).value,password:document.getElementById('p_'+id).value,authentication:document.getElementById('a_'+id).value};setStatus(`Logging in to ${env}...`);const r=await api(`/api/environments/${env}/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});state.sessions[env]={sessionId:r.sessionId,user:r.user,serverVersion:r.serverVersion,valid:true};document.getElementById('p_'+id).value='';saveSessions();setStatus(`${env}: logged in as ${r.user}`)}
 async function logoutEnv(env){const sid=sessionFor(env);if(sid){try{await api('/api/session/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sid})})}catch{}}delete state.sessions[env];saveSessions()}
@@ -570,13 +617,16 @@ function setViewMode(mode){
   loadCurrentObjects().catch(e=>setStatus(e.message));
 }
 function loadCurrentObjects(){
-  return state.mode==='differences'?loadDifferenceObjects():loadSourceObjects();
+  document.querySelector('.table-wrap')?.classList.add('loading');
+  const p=state.mode==='differences'?loadDifferenceObjects():loadSourceObjects();
+  return Promise.resolve(p).finally(()=>document.querySelector('.table-wrap')?.classList.remove('loading'));
 }
 async function loadDifferenceObjects(){
   savePair();
   state.mode='differences';
   state.compare=null;
   state.loadingObjects=true;
+  document.querySelector('.table-wrap')?.classList.add('loading');
   renderPager();
   setStatus(`Loading differences for ${TYPE_LABEL[state.type]} ${state.source.toUpperCase()} ↔ ${state.target.toUpperCase()}...`);
   readFilters();
@@ -602,6 +652,7 @@ async function loadDifferenceObjects(){
   state.offset=r.offset||0;
   state.pageSize=r.limit||state.pageSize;
   state.loadingObjects=false;
+  document.querySelector('.table-wrap')?.classList.remove('loading');
   renderRows();
   renderPager();
   renderTree();
@@ -617,6 +668,7 @@ async function loadSourceObjects(){
   state.statusFilter='';
   summary.innerHTML='';
   state.loadingObjects=true;
+  document.querySelector('.table-wrap')?.classList.add('loading');
   renderPager();
   setStatus(`Loading ${TYPE_LABEL[state.type]} from ${state.source.toUpperCase()}...`);
   readFilters();
@@ -633,6 +685,7 @@ async function loadSourceObjects(){
   state.offset=r.offset||0;
   state.pageSize=r.limit||state.pageSize;
   state.loadingObjects=false;
+  document.querySelector('.table-wrap')?.classList.remove('loading');
   renderRows();
   renderPager();
   renderHeader();
@@ -1167,7 +1220,7 @@ async function startMigration(){
     }
   }
 }
-function clearUserLog(){jobs.innerHTML=''}
+function clearUserLog(){state.logClearedAt=Date.now();localStorage.setItem('hlx.logClearedAt',String(state.logClearedAt));state.lastJobsSig='';renderJobs();setStatus('Activity Log view cleared. New events will appear here.')}
 function toggleActivityLog(){const p=document.getElementById('activityPanel');const b=document.getElementById('activityToggleBtn');if(!p)return;p.classList.toggle('expanded');p.classList.toggle('collapsed');const expanded=p.classList.contains('expanded');document.body.classList.toggle('activity-expanded', expanded);if(b)b.textContent=expanded?'Collapse':'Expand';}
 init();
 </script>

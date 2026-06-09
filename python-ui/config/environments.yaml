@@ -32,6 +32,8 @@ sync:
     escalations: true
     active_link_guides: true
     filter_guides: true
+    web_services: true
+    associations: true
     packing_lists: true
     applications: true
     containers: false

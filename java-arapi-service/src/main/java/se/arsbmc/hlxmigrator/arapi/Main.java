@@ -161,6 +161,11 @@ public class Main {
             ctx.json(Map.of("containers", user.getListContainer(0L, null, true, null, null), "mode", "index_only"));
         });
 
+        app.get("/metadata/associations", ctx -> {
+            ARServerUser user = user(ctx);
+            ctx.json(Map.of("associations", listAssociations(user), "mode", "index_only"));
+        });
+
         app.get("/metadata/container-categories", ctx -> {
             ARServerUser user = user(ctx);
             ctx.json(categorizedContainers(user));
@@ -215,6 +220,15 @@ public class Main {
             ctx.json(Map.of("type", "container", "name", name, "definitionLoaded", true,
                     "customizationType", detectCustomizationType(user, "container", name, obj),
                     "object", SafeObjectMapper.toSafe(obj)));
+        });
+
+        app.get("/metadata/associations/{name}", ctx -> {
+            ARServerUser user = user(ctx);
+            String name = ctx.pathParam("name");
+            Object obj = getAssociationObject(user, name);
+            ctx.json(Map.of("type", "association", "name", name, "definitionLoaded", obj != null,
+                    "customizationType", detectCustomizationType(user, "association", name, obj),
+                    "object", obj == null ? Map.of("name", name, "indexOnly", true) : SafeObjectMapper.toSafe(obj)));
         });
 
         app.get("/metadata/images/{name}", ctx -> {
@@ -1037,10 +1051,115 @@ public class Main {
 
     private record FieldMeta(int id, String name) { }
 
+    private static List<String> listAssociations(ARServerUser user) throws Exception {
+        Object raw = invokeFirstSuccessful(user, List.of(
+                "getListAssociation",
+                "getListAssociations",
+                "getListAssociationInfo"
+        ), true, null);
+        return toNameList(raw);
+    }
+
+    private static Object getAssociationObject(ARServerUser user, String name) {
+        try {
+            return invokeFirstSuccessful(user, List.of(
+                    "getAssociation",
+                    "getAssociationInfo"
+            ), false, name);
+        } catch (Exception e) {
+            log.warn("Could not load association detail for '{}': {}", name, rootCause(e).toString());
+            return null;
+        }
+    }
+
+    private static Object invokeFirstSuccessful(Object target, List<String> methodNames, boolean allowNoArgs, Object firstArg) throws Exception {
+        Throwable last = null;
+        for (String methodName : methodNames) {
+            for (Method m : target.getClass().getMethods()) {
+                if (!m.getName().equals(methodName)) continue;
+                Object[] args = buildDefaultArgs(m.getParameterTypes(), allowNoArgs, firstArg);
+                if (args == null) continue;
+                try {
+                    return m.invoke(target, args);
+                } catch (Throwable t) {
+                    last = rootCause(t);
+                }
+            }
+        }
+        if (last instanceof Exception e) throw e;
+        if (last != null) throw new RuntimeException(last);
+        throw new NoSuchMethodException("No usable ARAPI method found: " + methodNames);
+    }
+
+    private static Object[] buildDefaultArgs(Class<?>[] parameterTypes, boolean allowNoArgs, Object firstArg) {
+        if (parameterTypes.length == 0) return allowNoArgs ? new Object[0] : null;
+        Object[] args = new Object[parameterTypes.length];
+        for (int i = 0; i < parameterTypes.length; i++) {
+            Class<?> t = parameterTypes[i];
+            if (i == 0 && firstArg != null && t == String.class) {
+                args[i] = firstArg;
+            } else if (t == String.class) {
+                args[i] = null;
+            } else if (t == long.class || t == Long.class) {
+                args[i] = 0L;
+            } else if (t == int.class || t == Integer.class) {
+                args[i] = 0;
+            } else if (t == boolean.class || t == Boolean.class) {
+                args[i] = true;
+            } else if (List.class.isAssignableFrom(t) || Collection.class.isAssignableFrom(t)) {
+                args[i] = Collections.emptyList();
+            } else if (!t.isPrimitive()) {
+                args[i] = null;
+            } else {
+                return null;
+            }
+        }
+        return args;
+    }
+
+    private static List<String> toNameList(Object raw) {
+        List<String> names = new ArrayList<>();
+        if (raw == null) return names;
+        if (raw instanceof Collection<?> c) {
+            for (Object item : c) {
+                String name = objectName(item);
+                if (name != null && !name.isBlank()) names.add(name);
+            }
+        } else if (raw.getClass().isArray()) {
+            int len = java.lang.reflect.Array.getLength(raw);
+            for (int i = 0; i < len; i++) {
+                String name = objectName(java.lang.reflect.Array.get(raw, i));
+                if (name != null && !name.isBlank()) names.add(name);
+            }
+        } else {
+            String name = objectName(raw);
+            if (name != null && !name.isBlank()) names.add(name);
+        }
+        Collections.sort(names);
+        return names;
+    }
+
+    private static Object callNoArg(Object target, String methodName) {
+        try {
+            return target.getClass().getMethod(methodName).invoke(target);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static int intValue(Object value, int fallback) {
+        if (value instanceof Number n) return n.intValue();
+        try {
+            if (value != null) return Integer.parseInt(String.valueOf(value));
+        } catch (Exception ignored) { }
+        return fallback;
+    }
+
     private static Map<String, Object> categorizedContainers(ARServerUser user) throws Exception {
         Map<String, List<String>> categories = new LinkedHashMap<>();
         categories.put("activeLinkGuides", new ArrayList<>());
         categories.put("filterGuides", new ArrayList<>());
+        categories.put("webServices", new ArrayList<>());
         categories.put("packingLists", new ArrayList<>());
         categories.put("applications", new ArrayList<>());
         categories.put("otherContainers", new ArrayList<>());
@@ -1051,7 +1170,10 @@ public class Main {
             for (Container c : objects) {
                 String name = objectName(c);
                 String cls = c.getClass().getSimpleName().toLowerCase(Locale.ROOT);
-                if (cls.contains("activelinkguide")) {
+                int containerType = intValue(callNoArg(c, "getType"), -1);
+                if (containerType == 5 || cls.contains("webservice") || cls.contains("web service")) {
+                    categories.get("webServices").add(name);
+                } else if (cls.contains("activelinkguide")) {
                     categories.get("activeLinkGuides").add(name);
                 } else if (cls.contains("filterguide")) {
                     categories.get("filterGuides").add(name);
@@ -1215,9 +1337,12 @@ public class Main {
             case "menu", "menus", "character_menu", "file_menu", "search_menu", "sql_menu", "data_dictionary_menu" -> arConst(
                     List.of("AR_STRUCT_ITEM_CHAR_MENU", "AR_STRUCT_ITEM_MENU"), 5);
             case "active_link_guide", "active-link-guide", "filter_guide", "filter-guide",
+                    "web_service", "web-service", "web services", "webservices",
                     "packing_list", "packing-list", "application", "applications",
                     "other_container", "container", "containers" -> arConst(
                     List.of("AR_STRUCT_ITEM_CONTAINER"), 6);
+            case "association", "associations" -> arConst(
+                    List.of("AR_STRUCT_ITEM_ASSOCIATION", "AR_STRUCT_ITEM_ASSOC"), 0);
             case "image", "images" -> arConst(
                     List.of("AR_STRUCT_ITEM_IMAGE"), 7);
             default -> {

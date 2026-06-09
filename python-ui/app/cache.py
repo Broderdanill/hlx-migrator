@@ -340,7 +340,7 @@ async def sync_workflow_robust(
     ns = environment if service_cache else cache_namespace(environment, session_id)
     counts = {
         "active_link": 0, "filter": 0, "escalation": 0, "menu": 0, "image": 0,
-        "active_link_guide": 0, "filter_guide": 0, "packing_list": 0, "application": 0,
+        "active_link_guide": 0, "filter_guide": 0, "web_service": 0, "association": 0, "packing_list": 0, "application": 0,
     }
     errors: list[dict] = []
     steps: list[dict] = []
@@ -395,13 +395,14 @@ async def sync_workflow_robust(
                 return {"count": n, "total": len(raw), "inScope": len(filtered), "scopeMode": "object_name"}
             await step("menus", _menus)
 
-        if any(sync_cfg.get(k, False) for k in ("active_link_guides", "filter_guides", "packing_lists", "applications", "containers")):
+        if any(sync_cfg.get(k, False) for k in ("active_link_guides", "filter_guides", "web_services", "packing_lists", "applications", "containers")):
             async def _container_categories():
                 data = await client.container_categories(session_id)
                 result = {}
                 mappings = [
                     ("active_link_guides", "activeLinkGuides", "active_link_guide"),
                     ("filter_guides", "filterGuides", "filter_guide"),
+                    ("web_services", "webServices", "web_service"),
                     ("packing_lists", "packingLists", "packing_list"),
                     ("applications", "applications", "application"),
                 ]
@@ -421,6 +422,15 @@ async def sync_workflow_robust(
                     result["other_container"] = {"indexed": n, "total": len(raw), "inScope": len(filtered), "scopeMode": "object_name"}
                 return result
             await step("container_categories", _container_categories)
+
+        if sync_cfg.get("associations", False):
+            async def _associations():
+                raw = (await client.associations(session_id)).get("associations") or []
+                filtered = filter_index_values(raw)
+                n = _upsert_many(ns, "association", filtered)
+                counts["association"] += n
+                return {"count": n, "total": len(raw), "inScope": len(filtered), "scopeMode": "object_name"}
+            await step("associations", _associations)
 
         if sync_cfg.get("images", False):
             async def _images():
@@ -457,7 +467,7 @@ def _sync_detail_types_from_config() -> list[str]:
     if isinstance(configured, str):
         configured = [x.strip() for x in configured.split(",") if x.strip()]
     if not configured:
-        configured = ["form", "active_link", "filter", "escalation", "menu", "active_link_guide", "filter_guide", "packing_list", "application", "image"]
+        configured = ["form", "active_link", "filter", "escalation", "menu", "active_link_guide", "filter_guide", "web_service", "association", "packing_list", "application", "image"]
     # Only deep-cache object families that were enabled/indexed, except forms which
     # are controlled by sync.forms. This prevents surprises when a category is disabled.
     enabled = []
@@ -475,6 +485,10 @@ def _sync_detail_types_from_config() -> list[str]:
         elif t == "active_link_guide" and sync_cfg.get("active_link_guides", False):
             enabled.append(t)
         elif t == "filter_guide" and sync_cfg.get("filter_guides", False):
+            enabled.append(t)
+        elif t == "web_service" and sync_cfg.get("web_services", False):
+            enabled.append(t)
+        elif t == "association" and sync_cfg.get("associations", False):
             enabled.append(t)
         elif t == "packing_list" and sync_cfg.get("packing_lists", False):
             enabled.append(t)
