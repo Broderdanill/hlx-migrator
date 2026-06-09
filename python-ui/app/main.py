@@ -21,7 +21,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.1.5")
+app = FastAPI(title="HLX Migrator", version="1.1.6")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -491,7 +491,7 @@ async def health():
         arapi = await ArApiClient().health()
     except Exception as e:
         arapi = {"status": "error", "message": str(e)}
-    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.5", "logLevel": LOG_LEVEL, "arapi": arapi}
+    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.6", "logLevel": LOG_LEVEL, "arapi": arapi}
 
 
 @app.get("/api/environments")
@@ -1194,34 +1194,38 @@ async def migrate_def(req: MigrateReq):
         unchanged_count = 0
         refreshed_count = 0
         refresh_errors = 0
-        for item in req.items:
+
+        # AR System can return success from importDefFromFile before the imported
+        # object is immediately readable through ARAPI metadata endpoints. If we
+        # rebuild the Difference index too early the object can be cached as null
+        # or missing even though a manual Compare a few seconds later shows Equal.
+        # Give AR System a short settle time and then retry targeted reads for only
+        # the affected objects instead of running a full sync.
+        await asyncio.sleep(1.0)
+
+        async def refresh_one_for_verification(item: dict) -> dict | None:
             object_type = item.get("objectType") or item.get("object_type") or "form"
             name = item.get("name") or item.get("objectName")
             if not name:
-                continue
+                return None
             key = f"{object_type}::{name}"
             before = before_by_key.get(key, {"exists": False, "hash": None})
-            # Refresh both sides for the handled object. This keeps the difference
-            # index accurate after Promote/Backport without running a full sync.
-            source = await _fetch_detail_hash(source_session_id, req.source_environment, object_type, name, attempts=3, delay=0.35)
+
+            # Force-refresh both sides for the handled object. This keeps the
+            # Difference index accurate after Promote/Backport without running a
+            # full environment sync. Target gets a longer retry window because it
+            # is the side that was just imported to.
+            source = await _fetch_detail_hash(source_session_id, req.source_environment, object_type, name, attempts=5, delay=0.75)
             if source.get("exists") and source.get("detail"):
                 upsert_cached_object(req.source_environment, object_type, name, source["detail"])
 
-            after = await _fetch_detail_hash(target_session_id, req.target_environment, object_type, name, attempts=6, delay=0.75)
+            after = await _fetch_detail_hash(target_session_id, req.target_environment, object_type, name, attempts=30, delay=1.0)
             if after.get("exists") and after.get("detail"):
                 upsert_cached_object(req.target_environment, object_type, name, after["detail"])
-                refreshed_count += 1
-            else:
-                refresh_errors += 1
+
             changed = before.get("hash") != after.get("hash")
             equal_to_source = bool(source.get("hash") and after.get("hash") == source.get("hash"))
-            if changed:
-                changed_count += 1
-            else:
-                unchanged_count += 1
-            if equal_to_source:
-                equal_to_source_count += 1
-            verification.append({
+            return {
                 "objectType": object_type,
                 "name": name,
                 "targetExistedBefore": before.get("exists", False),
@@ -1236,7 +1240,50 @@ async def migrate_def(req: MigrateReq):
                 "afterHash": after.get("hash"),
                 "sourceHash": source.get("hash"),
                 "error": after.get("error") if not after.get("exists") else None,
-            })
+            }
+
+        for item in req.items:
+            verified = await refresh_one_for_verification(item)
+            if not verified:
+                continue
+            if verified.get("targetExistsAfter"):
+                refreshed_count += 1
+            else:
+                refresh_errors += 1
+            if verified.get("targetChanged"):
+                changed_count += 1
+            else:
+                unchanged_count += 1
+            if verified.get("targetEqualsSource"):
+                equal_to_source_count += 1
+            verification.append(verified)
+
+        # Final reconciliation pass: if anything still reads as missing/different,
+        # wait a little longer and refresh only those objects once more before
+        # rebuilding the Difference index. This avoids the stale "target null"
+        # state that otherwise disappears only after a manual Compare.
+        if verification and equal_to_source_count < len(verification):
+            pending_names = {v["name"] for v in verification if not v.get("targetEqualsSource")}
+            add_job(req.target_environment, "targeted-refresh", "running", f"Waiting for AR System metadata to settle for {len(pending_names)} object(s)", {"pending": len(pending_names)})
+            await asyncio.sleep(3.0)
+            refreshed_again = []
+            for item in req.items:
+                name = item.get("name") or item.get("objectName")
+                if name not in pending_names:
+                    continue
+                verified = await refresh_one_for_verification(item)
+                if verified:
+                    refreshed_again.append(verified)
+            if refreshed_again:
+                by_key = {f"{v['objectType']}::{v['name']}": v for v in verification}
+                for v in refreshed_again:
+                    by_key[f"{v['objectType']}::{v['name']}"] = v
+                verification = list(by_key.values())
+                changed_count = sum(1 for v in verification if v.get("targetChanged"))
+                unchanged_count = len(verification) - changed_count
+                equal_to_source_count = sum(1 for v in verification if v.get("targetEqualsSource"))
+                refreshed_count = sum(1 for v in verification if v.get("targetExistsAfter"))
+                refresh_errors = len(verification) - refreshed_count
 
         result["verification"] = {
             "checked": len(verification),
