@@ -92,9 +92,11 @@ public class Main {
             ARServerUser user = user(ctx);
             String name = ctx.pathParam("name");
             Map<String,Object> out = new LinkedHashMap<>();
+            Object formObj = user.getForm(name);
             out.put("type", "form");
             out.put("name", name);
-            out.put("form", SafeObjectMapper.toSafe(user.getForm(name)));
+            out.put("customizationType", detectCustomizationType(formObj));
+            out.put("form", SafeObjectMapper.toSafe(formObj));
             out.put("fields", SafeObjectMapper.toSafe(user.getListFieldObjects(name)));
             out.put("views", SafeObjectMapper.toSafe(user.getListViewObjects(name, 0L, null)));
             ctx.json(out);
@@ -173,43 +175,55 @@ public class Main {
         app.get("/metadata/active-links/{name}", ctx -> {
             ARServerUser user = user(ctx);
             String name = ctx.pathParam("name");
+            Object obj = user.getActiveLink(name);
             ctx.json(Map.of("type", "active_link", "name", name, "definitionLoaded", true,
-                    "object", SafeObjectMapper.toSafe(user.getActiveLink(name))));
+                    "customizationType", detectCustomizationType(obj),
+                    "object", SafeObjectMapper.toSafe(obj)));
         });
 
         app.get("/metadata/filters/{name}", ctx -> {
             ARServerUser user = user(ctx);
             String name = ctx.pathParam("name");
+            Object obj = user.getFilter(name);
             ctx.json(Map.of("type", "filter", "name", name, "definitionLoaded", true,
-                    "object", SafeObjectMapper.toSafe(user.getFilter(name))));
+                    "customizationType", detectCustomizationType(obj),
+                    "object", SafeObjectMapper.toSafe(obj)));
         });
 
         app.get("/metadata/escalations/{name}", ctx -> {
             ARServerUser user = user(ctx);
             String name = ctx.pathParam("name");
+            Object obj = user.getEscalation(name);
             ctx.json(Map.of("type", "escalation", "name", name, "definitionLoaded", true,
-                    "object", SafeObjectMapper.toSafe(user.getEscalation(name))));
+                    "customizationType", detectCustomizationType(obj),
+                    "object", SafeObjectMapper.toSafe(obj)));
         });
 
         app.get("/metadata/menus/{name}", ctx -> {
             ARServerUser user = user(ctx);
             String name = ctx.pathParam("name");
+            Object obj = user.getMenu(name, null);
             ctx.json(Map.of("type", "menu", "name", name, "definitionLoaded", true,
-                    "object", SafeObjectMapper.toSafe(user.getMenu(name, null))));
+                    "customizationType", detectCustomizationType(obj),
+                    "object", SafeObjectMapper.toSafe(obj)));
         });
 
         app.get("/metadata/containers/{name}", ctx -> {
             ARServerUser user = user(ctx);
             String name = ctx.pathParam("name");
+            Object obj = user.getContainer(name);
             ctx.json(Map.of("type", "container", "name", name, "definitionLoaded", true,
-                    "object", SafeObjectMapper.toSafe(user.getContainer(name))));
+                    "customizationType", detectCustomizationType(obj),
+                    "object", SafeObjectMapper.toSafe(obj)));
         });
 
         app.get("/metadata/images/{name}", ctx -> {
             ARServerUser user = user(ctx);
             String name = ctx.pathParam("name");
+            Object obj = user.getImage(name);
             ctx.json(Map.of("type", "image", "name", name, "definitionLoaded", true,
-                    "object", SafeObjectMapper.toSafe(user.getImage(name))));
+                    "customizationType", detectCustomizationType(obj),
+                    "object", SafeObjectMapper.toSafe(obj)));
         });
 
         app.post("/export/def", ctx -> {
@@ -618,6 +632,72 @@ public class Main {
             if (wanted.contains(String.valueOf(f.id).toLowerCase(Locale.ROOT)) || wanted.contains(f.name.toLowerCase(Locale.ROOT))) out.add(f);
         }
         return out.isEmpty() ? allFields : out;
+    }
+
+
+    private static String detectCustomizationType(Object obj) {
+        if (obj == null) return "Unknown";
+        for (String method : List.of("getCustomizationType", "getCustomization", "getCustomType", "getOverlayType", "getObjPropCustomizationType")) {
+            try {
+                Object value = obj.getClass().getMethod(method).invoke(obj);
+                String mapped = mapCustomizationValue(value);
+                if (!"Unknown".equals(mapped)) return mapped;
+            } catch (Exception ignored) { }
+        }
+        for (String method : List.of("isOverlay", "getOverlay", "isOverlaid")) {
+            try {
+                Object value = obj.getClass().getMethod(method).invoke(obj);
+                if (value instanceof Boolean b && b) return "Overlay";
+                if (value != null && "true".equalsIgnoreCase(String.valueOf(value))) return "Overlay";
+            } catch (Exception ignored) { }
+        }
+        for (String method : List.of("isCustom", "getCustom", "isCustomized")) {
+            try {
+                Object value = obj.getClass().getMethod(method).invoke(obj);
+                if (value instanceof Boolean b && b) return "Custom";
+                if (value != null && "true".equalsIgnoreCase(String.valueOf(value))) return "Custom";
+            } catch (Exception ignored) { }
+        }
+        try {
+            Object safe = SafeObjectMapper.toSafe(obj);
+            String fromSafe = findCustomizationInSafe(safe, 0);
+            if (!"Unknown".equals(fromSafe)) return fromSafe;
+        } catch (Exception ignored) { }
+        return "Unknown";
+    }
+
+    private static String mapCustomizationValue(Object value) {
+        if (value == null) return "Unknown";
+        String text = String.valueOf(value).trim();
+        if (text.isBlank()) return "Unknown";
+        String low = text.toLowerCase(Locale.ROOT);
+        if (low.contains("overlay") || "2".equals(low)) return "Overlay";
+        if (low.contains("custom") || "1".equals(low)) return "Custom";
+        if (low.contains("base") || "0".equals(low)) return "Base";
+        return "Unknown";
+    }
+
+    private static String findCustomizationInSafe(Object safe, int depth) {
+        if (safe == null || depth > 6) return "Unknown";
+        if (safe instanceof Map<?,?> map) {
+            for (Map.Entry<?,?> e : map.entrySet()) {
+                String key = String.valueOf(e.getKey()).toLowerCase(Locale.ROOT);
+                if (key.contains("customization") || key.contains("overlaytype") || key.equals("customtype") || key.equals("layer")) {
+                    String mapped = mapCustomizationValue(e.getValue());
+                    if (!"Unknown".equals(mapped)) return mapped;
+                }
+            }
+            for (Object value : map.values()) {
+                String mapped = findCustomizationInSafe(value, depth + 1);
+                if (!"Unknown".equals(mapped)) return mapped;
+            }
+        } else if (safe instanceof Iterable<?> list) {
+            for (Object value : list) {
+                String mapped = findCustomizationInSafe(value, depth + 1);
+                if (!"Unknown".equals(mapped)) return mapped;
+            }
+        }
+        return "Unknown";
     }
 
     private static Integer reflectInt(Object obj, List<String> methods) {

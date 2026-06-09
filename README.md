@@ -43,6 +43,7 @@ scope:
       - Base
       - Custom
       - Overlay
+      - Unknown
 ```
 
 Only objects related to matching forms are indexed and displayed. The customization type defaults control which Remedy/Helix layers are preselected in Browse and Differences filters.
@@ -372,6 +373,7 @@ scope:
       - Base
       - Custom
       - Overlay
+      - Unknown
 
 sync:
   auto_start: true
@@ -483,3 +485,11 @@ Copyright © HLX.
 - Name search remains always visible.
 - Changed By and Changed From/To filters are now inside an expandable Filters panel.
 - Compare, Migrate, and Download buttons are disabled until at least one object is selected.
+
+
+## 1.1.8 notes
+
+- Difference calculations now use the same normalization and ignored-key configuration as the Compare dialog.
+- Missing customization layer metadata is shown as `Unknown` instead of being treated as `Base`.
+- The Customization Type filter is a compact multi-select field for Base, Custom, Overlay and Unknown.
+- The Java ARAPI service attempts to expose customization layer metadata from object details using ARAPI reflection and safe-object inspection.

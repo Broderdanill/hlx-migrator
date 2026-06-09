@@ -21,7 +21,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.1.7")
+app = FastAPI(title="HLX Migrator", version="1.1.8")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -184,7 +184,7 @@ def _format_arapi_timestamp(value) -> str:
     The GUI should not show that raw object.
     """
     if value in (None, ""):
-        return ""
+        return "Unknown"
     raw = value
     if isinstance(value, dict):
         raw = value.get("value") or value.get("time") or value.get("timestamp") or value.get("date")
@@ -229,17 +229,18 @@ def _parse_display_timestamp(value: str | None):
 
 def _normalize_customization_type(value) -> str:
     if value in (None, ""):
-        return ""
+        return "Unknown"
     if isinstance(value, dict):
         value = value.get("name") or value.get("value") or value.get("type") or value.get("label")
     text = str(value).strip()
     if not text:
-        return ""
+        return "Unknown"
     low = text.lower()
     mapping = {
         "base": "Base", "0": "Base",
         "custom": "Custom", "customized": "Custom", "1": "Custom",
         "overlay": "Overlay", "overlaid": "Overlay", "2": "Overlay",
+        "unknown": "Unknown", "-1": "Unknown",
     }
     return mapping.get(low, text[:1].upper() + text[1:])
 
@@ -352,7 +353,7 @@ def _cached_meta_index(environment: str, object_type: str) -> dict[str, dict]:
         out[row.object_name] = {
             "timestamp": meta.get("timestamp") or "",
             "lastChangedBy": meta.get("lastChangedBy") or "",
-            "customizationType": meta.get("customizationType") or "",
+            "customizationType": meta.get("customizationType") or "Unknown",
             "definitionLoaded": bool(data.get("definitionLoaded")),
             "lastSeen": row.last_seen.isoformat() if row.last_seen else None,
         }
@@ -367,7 +368,7 @@ def _merge_diff_metadata(objects: list[dict], source: str, target: str, object_t
         name = obj.get("name") or ""
         sm = src_meta.get(name, {})
         tm = tgt_meta.get(name, {})
-        ct = sm.get("customizationType") or tm.get("customizationType") or ""
+        ct = sm.get("customizationType") or tm.get("customizationType") or "Unknown"
         enriched.append({
             **obj,
             "objectType": object_type,
@@ -375,8 +376,8 @@ def _merge_diff_metadata(objects: list[dict], source: str, target: str, object_t
             "sourceLastChangedBy": sm.get("lastChangedBy", ""),
             "targetTimestamp": tm.get("timestamp", ""),
             "targetLastChangedBy": tm.get("lastChangedBy", ""),
-            "sourceCustomizationType": sm.get("customizationType", ""),
-            "targetCustomizationType": tm.get("customizationType", ""),
+            "sourceCustomizationType": sm.get("customizationType", "Unknown"),
+            "targetCustomizationType": tm.get("customizationType", "Unknown"),
             "customizationType": ct,
             "timestamp": sm.get("timestamp", "") or tm.get("timestamp", ""),
             "lastChangedBy": sm.get("lastChangedBy", "") or tm.get("lastChangedBy", ""),
@@ -395,7 +396,8 @@ def build_difference_cache(source: str, target: str) -> dict:
     pair = {"source": source, "target": target, "builtAt": now_iso(), "objectTypes": {}, "summary": {}}
     for object_type in DIFF_OBJECT_TYPES:
         try:
-            diff = compare_environments(source, target, object_type)
+            diff_cfg = config_store.diff()
+            diff = compare_environments(source, target, object_type, set(diff_cfg.get("ignore_keys") or []), bool(diff_cfg.get("ignore_order", True)))
             objects = [o for o in diff.get("objects", []) if o.get("status") != "equal"]
             objects = _merge_diff_metadata(objects, source, target, object_type)
             summary = dict(diff.get("summary") or {})
@@ -710,7 +712,7 @@ def list_cached_objects_api(
     changed_to_dt = _parse_display_timestamp(changed_to_norm)
     changed_by_q_norm = (changed_by_q or "").strip()
     wanted_customization_types = {v.strip().lower() for v in (customization_types or "").split(",") if v.strip()}
-    if {"base", "custom", "overlay"}.issubset(wanted_customization_types):
+    if {"base", "custom", "overlay", "unknown"}.issubset(wanted_customization_types):
         wanted_customization_types = set()
     safe_limit = max(1, min(int(limit or 500), int(config_store.ui().get("max_page_size", 2000))))
     safe_offset = max(0, int(offset or 0))
@@ -730,7 +732,7 @@ def list_cached_objects_api(
             "lastSeen": row.last_seen.isoformat() if row.last_seen else None,
             "timestamp": meta.get("timestamp") or "",
             "lastChangedBy": meta.get("lastChangedBy") or "",
-            "customizationType": meta.get("customizationType") or "",
+            "customizationType": meta.get("customizationType") or "Unknown",
             "definitionLoaded": bool(data.get("definitionLoaded")),
         }
 
@@ -763,7 +765,7 @@ def list_cached_objects_api(
             return False
         if wanted_customization_types:
             ct = str(obj.get("customizationType") or "").strip().lower()
-            if (ct or "base") not in wanted_customization_types:
+            if (ct or "unknown") not in wanted_customization_types:
                 return False
         return True
 
@@ -986,7 +988,8 @@ async def compare_selected(req: CompareSelectedReq):
 def diff_forms(source: str, target: str, source_session_id: str | None = None, target_session_id: str | None = None, service_cache: bool = False):
     src_ns = source if service_cache else cache_namespace(source, source_session_id)
     tgt_ns = target if service_cache else cache_namespace(target, target_session_id)
-    return compare_environments(src_ns, tgt_ns, "form")
+    diff_cfg = config_store.diff()
+    return compare_environments(src_ns, tgt_ns, "form", set(diff_cfg.get("ignore_keys") or []), bool(diff_cfg.get("ignore_order", True)))
 
 
 @app.get("/api/diff/{object_type}")
@@ -996,7 +999,8 @@ def diff_object_type(object_type: str, source: str, target: str, source_session_
         raise HTTPException(status_code=400, detail=f"Unsupported object type: {object_type}")
     src_ns = source if service_cache else cache_namespace(source, source_session_id)
     tgt_ns = target if service_cache else cache_namespace(target, target_session_id)
-    return compare_environments(src_ns, tgt_ns, object_type)
+    diff_cfg = config_store.diff()
+    return compare_environments(src_ns, tgt_ns, object_type, set(diff_cfg.get("ignore_keys") or []), bool(diff_cfg.get("ignore_order", True)))
 
 
 @app.get("/api/differences")
@@ -1030,7 +1034,8 @@ def differences_api(
     data = pair.get("objectTypes", {}).get(object_type, {"summary": {}, "objects": [], "total": 0})
     objects = list(data.get("objects") or [])
     if include_equal:
-        raw = compare_environments(source, target, object_type)
+        diff_cfg = config_store.diff()
+        raw = compare_environments(source, target, object_type, set(diff_cfg.get("ignore_keys") or []), bool(diff_cfg.get("ignore_order", True)))
         objects = _merge_diff_metadata(list(raw.get("objects") or []), source, target, object_type)
         data = {"summary": raw.get("summary") or {}, "objects": objects, "total": len(objects)}
 
@@ -1044,7 +1049,7 @@ def differences_api(
     changed_from_dt = _parse_display_timestamp((changed_from or "").strip())
     changed_to_dt = _parse_display_timestamp((changed_to or "").strip())
     wanted_ct = {v.strip().lower() for v in (customization_types or "").split(",") if v.strip()}
-    if {"base", "custom", "overlay"}.issubset(wanted_ct):
+    if {"base", "custom", "overlay", "unknown"}.issubset(wanted_ct):
         wanted_ct = set()
 
     def _matches(obj: dict) -> bool:
@@ -1065,7 +1070,7 @@ def differences_api(
                 return False
         if wanted_ct:
             cts = {str(obj.get(k) or "").strip().lower() for k in ("customizationType", "sourceCustomizationType", "targetCustomizationType")}
-            cts = {ct or "base" for ct in cts}
+            cts = {ct or "unknown" for ct in cts}
             if not (cts & wanted_ct):
                 return False
         return True

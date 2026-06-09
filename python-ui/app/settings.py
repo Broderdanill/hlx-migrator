@@ -120,15 +120,15 @@ class ConfigStore:
         raw_ct = scope.get("customization_types", scope.get("customization_type_default"))
         if isinstance(raw_ct, dict):
             raw_ct = raw_ct.get("default", raw_ct.get("include"))
-        ct = _as_list(raw_ct) or ["Base", "Custom", "Overlay"]
-        canonical = {"base": "Base", "custom": "Custom", "overlay": "Overlay"}
+        ct = _as_list(raw_ct) or ["Base", "Custom", "Overlay", "Unknown"]
+        canonical = {"base": "Base", "custom": "Custom", "overlay": "Overlay", "unknown": "Unknown"}
         customization_types = []
         for value in ct:
             mapped = canonical.get(str(value).strip().lower())
             if mapped and mapped not in customization_types:
                 customization_types.append(mapped)
         if not customization_types:
-            customization_types = ["Base", "Custom", "Overlay"]
+            customization_types = ["Base", "Custom", "Overlay", "Unknown"]
 
         return {
             "include_form_prefixes": _as_list(scope.get("include_form_prefixes")),
