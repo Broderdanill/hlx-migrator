@@ -21,7 +21,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.1.6")
+app = FastAPI(title="HLX Migrator", version="1.1.7")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -227,6 +227,23 @@ def _parse_display_timestamp(value: str | None):
     except Exception:
         return None
 
+def _normalize_customization_type(value) -> str:
+    if value in (None, ""):
+        return ""
+    if isinstance(value, dict):
+        value = value.get("name") or value.get("value") or value.get("type") or value.get("label")
+    text = str(value).strip()
+    if not text:
+        return ""
+    low = text.lower()
+    mapping = {
+        "base": "Base", "0": "Base",
+        "custom": "Custom", "customized": "Custom", "1": "Custom",
+        "overlay": "Overlay", "overlaid": "Overlay", "2": "Overlay",
+    }
+    return mapping.get(low, text[:1].upper() + text[1:])
+
+
 def _object_metadata_columns(data: dict) -> dict:
     timestamp = _find_first_metadata_value(data, (
         "modifiedDate", "lastModifiedDate", "lastUpdateTime", "lastUpdate",
@@ -239,9 +256,15 @@ def _object_metadata_columns(data: dict) -> dict:
     ))
     if changed_by in (None, ""):
         changed_by = _find_first_metadata_value(data, ("owner",), max_depth=2)
+    customization_type = _find_first_metadata_value(data, (
+        "customizationType", "customization_type", "customization",
+        "overlayType", "overlay_type", "objectCustomizationType",
+        "customType", "layer", "viewLayer",
+    ))
     return {
         "timestamp": _format_arapi_timestamp(timestamp),
         "lastChangedBy": str(changed_by) if changed_by not in (None, "") else "",
+        "customizationType": _normalize_customization_type(customization_type),
     }
 
 def now_iso() -> str:
@@ -313,6 +336,54 @@ def _cache_key(source: str, target: str) -> str:
     return f"{source.lower()}->{target.lower()}"
 
 
+def _cached_meta_index(environment: str, object_type: str) -> dict[str, dict]:
+    with SessionLocal() as db:
+        rows = list(db.execute(select(CachedObject).where(
+            CachedObject.environment == environment,
+            CachedObject.object_type == object_type,
+        )).scalars().all())
+    out = {}
+    for row in rows:
+        try:
+            data = json.loads(row.json_data or "{}")
+        except Exception:
+            data = {}
+        meta = _object_metadata_columns(data)
+        out[row.object_name] = {
+            "timestamp": meta.get("timestamp") or "",
+            "lastChangedBy": meta.get("lastChangedBy") or "",
+            "customizationType": meta.get("customizationType") or "",
+            "definitionLoaded": bool(data.get("definitionLoaded")),
+            "lastSeen": row.last_seen.isoformat() if row.last_seen else None,
+        }
+    return out
+
+
+def _merge_diff_metadata(objects: list[dict], source: str, target: str, object_type: str) -> list[dict]:
+    src_meta = _cached_meta_index(source, object_type)
+    tgt_meta = _cached_meta_index(target, object_type)
+    enriched = []
+    for obj in objects:
+        name = obj.get("name") or ""
+        sm = src_meta.get(name, {})
+        tm = tgt_meta.get(name, {})
+        ct = sm.get("customizationType") or tm.get("customizationType") or ""
+        enriched.append({
+            **obj,
+            "objectType": object_type,
+            "sourceTimestamp": sm.get("timestamp", ""),
+            "sourceLastChangedBy": sm.get("lastChangedBy", ""),
+            "targetTimestamp": tm.get("timestamp", ""),
+            "targetLastChangedBy": tm.get("lastChangedBy", ""),
+            "sourceCustomizationType": sm.get("customizationType", ""),
+            "targetCustomizationType": tm.get("customizationType", ""),
+            "customizationType": ct,
+            "timestamp": sm.get("timestamp", "") or tm.get("timestamp", ""),
+            "lastChangedBy": sm.get("lastChangedBy", "") or tm.get("lastChangedBy", ""),
+        })
+    return enriched
+
+
 def build_difference_cache(source: str, target: str) -> dict:
     """Build an in-memory difference index for one environment pair.
 
@@ -321,23 +392,14 @@ def build_difference_cache(source: str, target: str) -> dict:
     Differences view. Equal rows are not stored in the object list.
     """
     pair_key = _cache_key(source, target)
-    pair = {
-        "source": source,
-        "target": target,
-        "builtAt": now_iso(),
-        "objectTypes": {},
-        "summary": {},
-    }
+    pair = {"source": source, "target": target, "builtAt": now_iso(), "objectTypes": {}, "summary": {}}
     for object_type in DIFF_OBJECT_TYPES:
         try:
             diff = compare_environments(source, target, object_type)
             objects = [o for o in diff.get("objects", []) if o.get("status") != "equal"]
+            objects = _merge_diff_metadata(objects, source, target, object_type)
             summary = dict(diff.get("summary") or {})
-            pair["objectTypes"][object_type] = {
-                "summary": summary,
-                "objects": objects,
-                "total": len(objects),
-            }
+            pair["objectTypes"][object_type] = {"summary": summary, "objects": objects, "total": len(objects)}
             pair["summary"][object_type] = {
                 "different": int(summary.get("different", 0)),
                 "missing_in_source": int(summary.get("missing_in_source", 0)),
@@ -620,6 +682,7 @@ def list_cached_objects_api(
     changed_from: str | None = None,
     changed_to: str | None = None,
     changed_by_q: str | None = None,
+    customization_types: str | None = None,
     limit: int = 500,
     offset: int = 0,
     sort: str = "name",
@@ -646,6 +709,9 @@ def list_cached_objects_api(
     changed_from_dt = _parse_display_timestamp(changed_from_norm)
     changed_to_dt = _parse_display_timestamp(changed_to_norm)
     changed_by_q_norm = (changed_by_q or "").strip()
+    wanted_customization_types = {v.strip().lower() for v in (customization_types or "").split(",") if v.strip()}
+    if {"base", "custom", "overlay"}.issubset(wanted_customization_types):
+        wanted_customization_types = set()
     safe_limit = max(1, min(int(limit or 500), int(config_store.ui().get("max_page_size", 2000))))
     safe_offset = max(0, int(offset or 0))
     sort_key = (sort or "name").lower()
@@ -664,6 +730,7 @@ def list_cached_objects_api(
             "lastSeen": row.last_seen.isoformat() if row.last_seen else None,
             "timestamp": meta.get("timestamp") or "",
             "lastChangedBy": meta.get("lastChangedBy") or "",
+            "customizationType": meta.get("customizationType") or "",
             "definitionLoaded": bool(data.get("definitionLoaded")),
         }
 
@@ -694,6 +761,10 @@ def list_cached_objects_api(
                 return False
         if changed_by_q_norm and changed_by_q_norm.lower() not in str(obj.get("lastChangedBy") or "").lower():
             return False
+        if wanted_customization_types:
+            ct = str(obj.get("customizationType") or "").strip().lower()
+            if (ct or "base") not in wanted_customization_types:
+                return False
         return True
 
     def object_sort_value(obj: dict, key: str):
@@ -703,6 +774,8 @@ def list_cached_objects_api(
             return parsed or datetime.min.replace(tzinfo=timezone.utc)
         if key == "lastchangedby":
             return str(obj.get("lastChangedBy") or "").lower()
+        if key == "customizationtype":
+            return str(obj.get("customizationType") or "").lower()
         if key == "lastseen":
             return str(obj.get("lastSeen") or "")
         if key == "hash":
@@ -719,7 +792,7 @@ def list_cached_objects_api(
         # metadata, such as Timestamp and Last Changed By. For normal browsing we
         # keep paging in SQL. When q is present, we scan this object type once,
         # compute metadata columns, filter, sort and then page the matched result.
-        if q_norm or name_q_norm or timestamp_q_norm or changed_from_dt or changed_to_dt or changed_by_q_norm:
+        if q_norm or name_q_norm or timestamp_q_norm or changed_from_dt or changed_to_dt or changed_by_q_norm or wanted_customization_types:
             all_rows = list(
                 db.execute(
                     select(CachedObject)
@@ -933,6 +1006,15 @@ def differences_api(
     object_type: str = "form",
     include_equal: bool = False,
     status: str | None = None,
+    name_q: str | None = None,
+    changed_by_q: str | None = None,
+    changed_from: str | None = None,
+    changed_to: str | None = None,
+    customization_types: str | None = None,
+    limit: int = 500,
+    offset: int = 0,
+    sort: str = "name",
+    direction: str = "asc",
 ):
     allowed = set(DIFF_OBJECT_TYPES)
     if object_type not in allowed:
@@ -949,13 +1031,69 @@ def differences_api(
     objects = list(data.get("objects") or [])
     if include_equal:
         raw = compare_environments(source, target, object_type)
-        objects = list(raw.get("objects") or [])
+        objects = _merge_diff_metadata(list(raw.get("objects") or []), source, target, object_type)
         data = {"summary": raw.get("summary") or {}, "objects": objects, "total": len(objects)}
 
     if status:
-        wanted = {s.strip() for s in status.split(",") if s.strip()}
+        wanted = {v.strip() for v in status.split(",") if v.strip()}
         if wanted:
             objects = [o for o in objects if o.get("status") in wanted]
+
+    name_norm = (name_q or "").strip().lower()
+    changed_by_norm = (changed_by_q or "").strip().lower()
+    changed_from_dt = _parse_display_timestamp((changed_from or "").strip())
+    changed_to_dt = _parse_display_timestamp((changed_to or "").strip())
+    wanted_ct = {v.strip().lower() for v in (customization_types or "").split(",") if v.strip()}
+    if {"base", "custom", "overlay"}.issubset(wanted_ct):
+        wanted_ct = set()
+
+    def _matches(obj: dict) -> bool:
+        if name_norm and name_norm not in str(obj.get("name") or "").lower():
+            return False
+        if changed_by_norm:
+            by_text = f"{obj.get('lastChangedBy','')} {obj.get('sourceLastChangedBy','')} {obj.get('targetLastChangedBy','')}".lower()
+            if changed_by_norm not in by_text:
+                return False
+        if changed_from_dt or changed_to_dt:
+            ts_values = [_parse_display_timestamp(str(obj.get(k) or "")) for k in ("sourceTimestamp", "targetTimestamp", "timestamp")]
+            ts_values = [v for v in ts_values if v is not None]
+            if not ts_values:
+                return False
+            if changed_from_dt and max(ts_values) < changed_from_dt:
+                return False
+            if changed_to_dt and min(ts_values) > changed_to_dt:
+                return False
+        if wanted_ct:
+            cts = {str(obj.get(k) or "").strip().lower() for k in ("customizationType", "sourceCustomizationType", "targetCustomizationType")}
+            cts = {ct or "base" for ct in cts}
+            if not (cts & wanted_ct):
+                return False
+        return True
+
+    objects = [o for o in objects if _matches(o)]
+
+    sort_key = (sort or "name").lower()
+    reverse = (direction or "asc").lower() == "desc"
+    def _sort_value(obj: dict):
+        if sort_key in {"timestamp", "sourcetimestamp"}:
+            return _parse_display_timestamp(str(obj.get("sourceTimestamp") or obj.get("timestamp") or "")) or datetime.min.replace(tzinfo=timezone.utc)
+        if sort_key == "targettimestamp":
+            return _parse_display_timestamp(str(obj.get("targetTimestamp") or "")) or datetime.min.replace(tzinfo=timezone.utc)
+        if sort_key in {"lastchangedby", "sourcelastchangedby"}:
+            return str(obj.get("sourceLastChangedBy") or obj.get("lastChangedBy") or "").lower()
+        if sort_key == "targetlastchangedby":
+            return str(obj.get("targetLastChangedBy") or "").lower()
+        if sort_key == "customizationtype":
+            return str(obj.get("customizationType") or "").lower()
+        if sort_key == "status":
+            return str(obj.get("status") or "")
+        return str(obj.get("name") or "").lower()
+    objects.sort(key=lambda obj: (_sort_value(obj), str(obj.get("name") or "").lower()), reverse=reverse)
+
+    safe_limit = max(1, min(int(limit or 500), int(config_store.ui().get("max_page_size", 2000))))
+    safe_offset = max(0, int(offset or 0))
+    total = len(objects)
+    page = objects[safe_offset:safe_offset + safe_limit]
 
     return {
         "source": source,
@@ -963,8 +1101,13 @@ def differences_api(
         "object_type": object_type,
         "builtAt": pair.get("builtAt"),
         "summary": data.get("summary") or {},
-        "total": len(objects),
-        "objects": objects,
+        "total": total,
+        "count": len(page),
+        "limit": safe_limit,
+        "offset": safe_offset,
+        "hasNext": safe_offset + len(page) < total,
+        "hasPrev": safe_offset > 0,
+        "objects": page,
     }
 
 

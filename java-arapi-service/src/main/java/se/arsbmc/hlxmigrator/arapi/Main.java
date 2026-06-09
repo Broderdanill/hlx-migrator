@@ -218,8 +218,8 @@ public class Main {
             List items = new ArrayList();
             for (ExportItem item : req.items) {
                 Object structItem = createStructItemInfo(item);
-                log.info("DEF export item: name='{}', objectType='{}', browserType='{}', mappedType='{}', struct={}",
-                        item.name, item.objectType, item.type, mapStructType(item), describeStructItemInfo(structItem));
+                log.info("DEF export item: name='{}', objectType='{}', customizationType='{}', browserType='{}', mappedType='{}', struct={}",
+                        item.name, item.objectType, item.customizationType, item.type, mapStructType(item), describeStructItemInfo(structItem));
                 items.add(structItem);
             }
             Path dir = Paths.get(System.getenv().getOrDefault("EXPORT_DIR", "/data/exports"));
@@ -253,8 +253,8 @@ public class Main {
             List items = new ArrayList();
             for (ExportItem item : req.items) {
                 Object structItem = createStructItemInfo(item);
-                log.info("DEF migration item: name='{}', objectType='{}', browserType='{}', mappedType='{}', struct={}",
-                        item.name, item.objectType, item.type, mapStructType(item), describeStructItemInfo(structItem));
+                log.info("DEF migration item: name='{}', objectType='{}', customizationType='{}', browserType='{}', mappedType='{}', struct={}",
+                        item.name, item.objectType, item.customizationType, item.type, mapStructType(item), describeStructItemInfo(structItem));
                 items.add(structItem);
             }
 
@@ -1010,5 +1010,6 @@ public class Main {
         public int type;
         public String objectType;
         public String name;
+        public String customizationType;
     }
 }

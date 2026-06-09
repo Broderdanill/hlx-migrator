@@ -111,9 +111,29 @@ class ConfigStore:
                 return [str(v).strip() for v in value if str(v).strip()]
             return [str(value).strip()] if str(value).strip() else []
 
+        # Remedy/Helix Developer Studio has three customization layers. Keep all
+        # enabled by default, but allow the ConfigMap to define which layers the
+        # UI should preselect. Supported shapes:
+        #   customization_types: [Base, Custom, Overlay]
+        #   customization_types: {default: [Base, Custom], include: [...]}
+        #   customization_type_default: [Base, Custom, Overlay]
+        raw_ct = scope.get("customization_types", scope.get("customization_type_default"))
+        if isinstance(raw_ct, dict):
+            raw_ct = raw_ct.get("default", raw_ct.get("include"))
+        ct = _as_list(raw_ct) or ["Base", "Custom", "Overlay"]
+        canonical = {"base": "Base", "custom": "Custom", "overlay": "Overlay"}
+        customization_types = []
+        for value in ct:
+            mapped = canonical.get(str(value).strip().lower())
+            if mapped and mapped not in customization_types:
+                customization_types.append(mapped)
+        if not customization_types:
+            customization_types = ["Base", "Custom", "Overlay"]
+
         return {
             "include_form_prefixes": _as_list(scope.get("include_form_prefixes")),
             "exclude_form_prefixes": _as_list(scope.get("exclude_form_prefixes")),
+            "customization_types": customization_types,
         }
 
     def sync(self) -> dict:

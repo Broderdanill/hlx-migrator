@@ -37,9 +37,15 @@ scope:
     - "HLX*"
 
   exclude_form_prefixes: []
+
+  customization_types:
+    default:
+      - Base
+      - Custom
+      - Overlay
 ```
 
-Only objects related to matching forms are indexed and displayed.
+Only objects related to matching forms are indexed and displayed. The customization type defaults control which Remedy/Helix layers are preselected in Browse and Differences filters.
 
 ---
 
@@ -360,6 +366,12 @@ scope:
     - "HLX*"
 
   exclude_form_prefixes: []
+
+  customization_types:
+    default:
+      - Base
+      - Custom
+      - Overlay
 
 sync:
   auto_start: true

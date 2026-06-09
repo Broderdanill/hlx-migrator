@@ -9,7 +9,7 @@
     :root{--bg:#070b12;--bg2:#0c1423;--panel:#101b2d;--panel2:#15243b;--line:#253957;--line2:#38577f;--text:#e7edf7;--muted:#91a2bc;--accent:#6ea8ff;--ok:#58d68d;--warn:#ffd166;--bad:#ff6b6b;--diff:#ff9f43;--sel:#223e68;--hover:#1c3151;--shadow:0 12px 28px rgba(0,0,0,.38)}
     *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top left,#14294c,#070b12 44%,#04060b);color:var(--text);font:13px/1.28 Segoe UI,system-ui,-apple-system,sans-serif} button,select,input{font:inherit;border:1px solid var(--line2);border-radius:7px;background:#0b1424;color:var(--text);padding:5px 9px} button{cursor:pointer;background:#17253d}button:hover{background:#22395d}button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.35);box-shadow:none!important}button:disabled:hover{background:#17253d}button.primary{background:linear-gradient(#6ea8ff,#3b71df);border-color:#80b4ff;color:white}button.danger{background:#391a25;border-color:#833a4f;color:#ffd4dc}button.ghost{background:transparent}.ok{color:var(--ok);font-weight:700}.warn{color:var(--warn);font-weight:700}.bad{color:var(--bad);font-weight:700}.muted{color:var(--muted)}.small{font-size:12px}.mono{font-family:ui-monospace,Consolas,monospace}.hidden{display:none!important}.sync-active{animation:syncPulse 1.25s ease-in-out infinite;border-color:#ffd166!important;color:#fff;background:linear-gradient(90deg,#26385a,#6b4b18)!important}@keyframes syncPulse{0%{box-shadow:0 0 0 rgba(255,209,102,0)}50%{box-shadow:0 0 16px rgba(255,209,102,.55)}100%{box-shadow:0 0 0 rgba(255,209,102,0)}}
     header{height:58px;background:linear-gradient(90deg,#0b1220,#182847);display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line);box-shadow:var(--shadow)}.brand{display:flex;align-items:center;gap:10px}.app-icon{width:45px;height:45px;border-radius:50%;object-fit:cover;border:0;box-shadow:0 0 14px rgba(110,168,255,.20)} h1{font-size:18px;margin:0}.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.layout{display:grid;grid-template-columns:285px 1fr;min-height:calc(100vh - 58px)} aside{border-right:1px solid var(--line);background:rgba(10,18,31,.94);display:flex;flex-direction:column}.side-head{padding:12px 14px;border-bottom:1px solid var(--line);background:#0b1424}.env-pair{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center}.env-pair select{width:100%;min-width:0}.arrow{color:var(--accent);font-weight:800;font-size:18px;text-align:center}.tree button{display:flex;justify-content:space-between;width:100%;border:0;border-bottom:1px solid #142238;border-radius:0;background:transparent;padding:11px 14px;text-align:left}.tree button.active{background:#1c3151;color:white;border-left:4px solid var(--accent)}.badge{min-width:22px;text-align:center;border-radius:999px;background:#223653;padding:2px 7px;color:#c8d6eb}.main{padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}.panel{background:rgba(17,28,47,.94);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}.panel-pad{padding:12px}.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pill{display:inline-flex;gap:5px;align-items:center;border:1px solid var(--line2);border-radius:999px;padding:3px 9px;background:#0d1729;color:#d5e2f4}.metric{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid #1a2a44}.env-menu{position:absolute;right:14px;top:62px;width:min(920px,calc(100vw - 28px));max-height:70vh;overflow:auto;background:#0b1220;border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow);z-index:9;padding:12px}.env-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}.env-card{background:#111c2f;border:1px solid var(--line);border-radius:10px;padding:10px}.login-panel{display:none}.login-panel.open{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:72px 24px 24px;background:rgba(0,0,0,.64);backdrop-filter:blur(3px);z-index:28}.login-modal-card{width:min(980px,calc(100vw - 40px));max-height:calc(100vh - 100px);overflow:auto;background:#0b1220;border:1px solid var(--line2);border-radius:14px;box-shadow:0 25px 80px rgba(0,0,0,.75)}.login-env{border:1px solid var(--line);border-radius:12px;background:#0f1a2d;padding:12px;margin-top:10px}.login-env h3{margin:0}.login-env .row{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) minmax(140px,1fr) auto auto;gap:8px;align-items:end}.login-env label{display:block}.login-env input{width:100%}.modal-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.modal-form label{display:block}.modal-form input,.modal-form select,textarea.modal-textarea{width:100%}.modal-wide{grid-column:1/-1}textarea.modal-textarea{min-height:90px;resize:vertical}@media(max-width:850px){.login-env .row,.modal-form{grid-template-columns:1fr}}
-    .filter-main-row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}.name-filter{min-width:280px;max-width:520px;flex:1}.action-buttons{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.filter-sub-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}.filter-toggle{display:inline-flex;align-items:center;gap:6px}.filter-count{background:#315a91;color:#fff;border-radius:999px;padding:1px 6px;font-size:11px}.advanced-filters{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#0b1424;display:flex;gap:8px;align-items:end;flex-wrap:wrap}.advanced-filters label{display:block}.advanced-filters input{min-width:185px}.selected-badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line2);border-radius:999px;padding:3px 9px;background:#0d1729;color:#c8d6eb;max-width:720px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}@media(max-width:900px){.name-filter{min-width:100%;max-width:none}.action-buttons{width:100%}}
+    .filter-main-row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}.name-filter{min-width:280px;max-width:520px;flex:1}.action-buttons{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.filter-sub-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}.filter-toggle{display:inline-flex;align-items:center;gap:6px}.filter-count{background:#315a91;color:#fff;border-radius:999px;padding:1px 6px;font-size:11px}.advanced-filters{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#0b1424;display:flex;gap:8px;align-items:end;flex-wrap:wrap}.advanced-filters label{display:block}.advanced-filters input{min-width:185px}.ct-filter{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ct-filter label{display:inline-flex!important;align-items:center;gap:4px}.selected-badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line2);border-radius:999px;padding:3px 9px;background:#0d1729;color:#c8d6eb;max-width:720px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}@media(max-width:900px){.name-filter{min-width:100%;max-width:none}.action-buttons{width:100%}}
     .content-grid{display:block;min-height:0;flex:1;overflow:hidden}.table-wrap{overflow:auto;height:100%;max-height:none;border-radius:10px;border:1px solid var(--line)}table{width:100%;border-collapse:collapse}th{position:sticky;top:0;background:#0b1424;z-index:1;color:#b8c8e0}th,td{padding:2px 7px;border-bottom:1px solid #1b2c47;text-align:left}tbody tr:nth-child(even){background:#0e1a2d}tbody tr:hover{background:var(--hover)}tbody tr.selected{background:var(--sel)}.name-link{cursor:pointer;color:#ddebff}.name-link:hover{text-decoration:underline}.status-badge{cursor:pointer}.s-equal{color:var(--ok);font-weight:700}.s-different{color:var(--diff);font-weight:700}.s-missing_in_source,.s-missing_in_target{color:var(--bad);font-weight:700}.s-not_compared{color:var(--muted)} .detail pre{white-space:pre-wrap;word-break:break-word;max-height:47vh;overflow:auto;background:#07101d;border:1px solid #1b2c47;border-radius:8px;padding:10px}
     .detail-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}
     .detail-tabs{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
@@ -105,12 +105,13 @@
         <button onclick="setDateRange(7)">Last 7 Days</button>
         <button onclick="setDateRange(30)">Last 30 Days</button>
         <button onclick="setDateRange(90)">Last 90 Days</button>
+        <div class="ct-filter small muted"><span>Customization Type:</span><label><input id="ctBase" type="checkbox" value="Base" onchange="onSearchInput()"> Base</label><label><input id="ctCustom" type="checkbox" value="Custom" onchange="onSearchInput()"> Custom</label><label><input id="ctOverlay" type="checkbox" value="Overlay" onchange="onSearchInput()"> Overlay</label></div>
         <button class="ghost" onclick="clearFilters()">Clear Filters</button>
       </div>
       <div id="pager" class="row small muted" style="margin-top:8px"></div>
     </section>
     <section class="content-grid">
-      <div class="panel table-wrap"><table><thead><tr><th class="select-all-cell"><input id="selectAllBox" class="check" type="checkbox" onchange="toggleSelectAllVisible(this.checked)"></th><th class="sortable" onclick="setSort('name')">Name <span id="sort_name" class="sort-ind"></span></th><th class="copy-cell">Copy</th><th class="sortable" onclick="setSort('timestamp')">Timestamp <span id="sort_timestamp" class="sort-ind"></span></th><th class="sortable" onclick="setSort('lastChangedBy')">Last Changed By <span id="sort_lastChangedBy" class="sort-ind"></span></th><th class="sortable" onclick="setSort('status')">Status <span id="sort_status" class="sort-ind"></span></th><th>Source</th><th>Target</th><th>Details</th></tr></thead><tbody id="resultRows"></tbody></table></div>
+      <div class="panel table-wrap"><table><thead><tr><th class="select-all-cell"><input id="selectAllBox" class="check" type="checkbox" onchange="toggleSelectAllVisible(this.checked)"></th><th class="sortable" onclick="setSort('name')">Name <span id="sort_name" class="sort-ind"></span></th><th class="copy-cell">Copy</th><th class="sortable" onclick="setSort('sourceTimestamp')">Source Timestamp <span id="sort_sourceTimestamp" class="sort-ind"></span></th><th class="sortable" onclick="setSort('sourceLastChangedBy')">Source Changed By <span id="sort_sourceLastChangedBy" class="sort-ind"></span></th><th class="sortable" onclick="setSort('targetTimestamp')">Target Timestamp <span id="sort_targetTimestamp" class="sort-ind"></span></th><th class="sortable" onclick="setSort('targetLastChangedBy')">Target Changed By <span id="sort_targetLastChangedBy" class="sort-ind"></span></th><th class="sortable" onclick="setSort('customizationType')">Customization <span id="sort_customizationType" class="sort-ind"></span></th><th class="sortable" onclick="setSort('status')">Status <span id="sort_status" class="sort-ind"></span></th><th>Source</th><th>Target</th><th>Details</th></tr></thead><tbody id="resultRows"></tbody></table></div>
     </section>
     <section id="activityPanel" class="panel activity-panel collapsed">
       <div class="panel-pad toolbar activity-head"><div><strong>Status / Activity Log</strong><div id="statusText" class="small muted">Starting...</div></div><div class="row"><button id="activityToggleBtn" onclick="toggleActivityLog()" class="ghost">Expand</button><button onclick="clearUserLog()" class="ghost">Clear View</button></div></div>
@@ -175,7 +176,7 @@
 const TYPE_LABEL={form:'Forms',active_link:'Active Links',filter:'Filters',escalation:'Escalations',menu:'Menus',active_link_guide:'Active Link Guides',filter_guide:'Filter Guides',packing_list:'Packing Lists',application:'Applications',image:'Images'};
 const TYPE_TO_EXPORT={form:1,active_link:2,filter:3,escalation:4,menu:5,active_link_guide:6,filter_guide:6,packing_list:6,application:6,image:7};
 const TYPES=['form','active_link','filter','menu','escalation','active_link_guide','filter_guide','packing_list','application','image'];
-const state={envs:[],scope:{},sync:{},cache:{},serverCache:{},sessions:JSON.parse(sessionStorage.getItem('hlx.sessions')||'{}'),source:sessionStorage.getItem('hlx.sourceEnv')||'',target:sessionStorage.getItem('hlx.targetEnv')||'',type:'form',mode:'browse',objects:[],compare:null,selected:[],statusFilter:'',sortKey:'name',sortDir:'asc',pageSize:100,offset:0,total:0,loadingObjects:false,searchTimer:null,filters:{name:'',changedBy:'',changedFrom:'',changedTo:''},showAdvancedFilters:false,diff:null,viewMode:'browse'};
+const state={envs:[],scope:{},sync:{},cache:{},serverCache:{},sessions:JSON.parse(sessionStorage.getItem('hlx.sessions')||'{}'),source:sessionStorage.getItem('hlx.sourceEnv')||'',target:sessionStorage.getItem('hlx.targetEnv')||'',type:'form',mode:'browse',objects:[],compare:null,selected:[],statusFilter:'',sortKey:'name',sortDir:'asc',pageSize:100,offset:0,total:0,loadingObjects:false,searchTimer:null,filters:{name:'',changedBy:'',changedFrom:'',changedTo:'',customizationTypes:[]},showAdvancedFilters:false,diff:null,viewMode:'browse'};
 let dialogResolver=null;
 let busyDepth=0;
 function beginBusy(title='Working...', detail='Please wait.'){
@@ -269,7 +270,16 @@ async function init(){renderTree();await refreshAll();await validateStoredSessio
 async function refreshAll(){try{const e=await api('/api/environments');state.envs=e.environments;state.scope=e.scope||{};state.sync=e.sync||{};state.serverCache=e.serverCache||{};const c=await api('/api/cache/summary');state.cache=c.environments||{};renderSelects();renderTree();renderCards();renderJobs();renderScope();renderHeader();document.getElementById('syncStatusBtn')?.classList.toggle('sync-active', !!state.serverCache.running || Object.keys(state.serverCache.locks||{}).length>0);setStatus(state.serverCache.running?'Server sync is running...':'Ready')}catch(err){setStatus(err.message)}}
 function renderSelects(){for(const el of [sourceEnv,targetEnv]){const sel=el.id==='sourceEnv'?state.source:state.target;el.innerHTML=state.envs.map(e=>`<option ${e===sel?'selected':''}>${e.toUpperCase()}</option>`).join('')}}
 function savePair(){state.source=sourceEnv.value.toLowerCase();state.target=targetEnv.value.toLowerCase();sessionStorage.setItem('hlx.sourceEnv',state.source);sessionStorage.setItem('hlx.targetEnv',state.target);renderHeader()}
-function renderScope(){if(!document.getElementById('scopeBox'))return;scopeBox.innerHTML=`<span class="pill">Include ${(state.scope.include_form_prefixes||[]).join(', ')||'-'}</span><span class="pill">Exclude ${(state.scope.exclude_form_prefixes||[]).join(', ')||'-'}</span>`}
+function defaultCustomizationTypes(){return (state.scope.customization_types&&state.scope.customization_types.length)?state.scope.customization_types:['Base','Custom','Overlay']}
+function ensureCustomizationChecks(){
+  const defaults=new Set(defaultCustomizationTypes().map(x=>String(x).toLowerCase()));
+  const map={ctBase:'base',ctCustom:'custom',ctOverlay:'overlay'};
+  for(const [id,val] of Object.entries(map)){const el=document.getElementById(id);if(el && !el.dataset.initialized){el.checked=defaults.has(val);el.dataset.initialized='1';}}
+}
+function selectedCustomizationTypes(){
+  return ['ctBase','ctCustom','ctOverlay'].map(id=>document.getElementById(id)).filter(el=>el&&el.checked).map(el=>el.value);
+}
+function renderScope(){if(!document.getElementById('scopeBox'))return;scopeBox.innerHTML=`<span class="pill">Include ${(state.scope.include_form_prefixes||[]).join(', ')||'-'}</span><span class="pill">Exclude ${(state.scope.exclude_form_prefixes||[]).join(', ')||'-'}</span><span class="pill">Customization ${(state.scope.customization_types||['Base','Custom','Overlay']).join(', ')}</span>`;ensureCustomizationChecks()}
 function renderTree(){
   const pairKey=`${String(state.source||'').toLowerCase()}->${String(state.target||'').toLowerCase()}`;
   const diffSummary=state.serverCache?.differences?.[pairKey]?.summary||{};
@@ -320,17 +330,22 @@ The cache will update in the background.`);
   }
 }
 function readFilters(){
+  ensureCustomizationChecks();
   state.filters={
     name:(document.getElementById('nameFilter')?.value||''),
     changedBy:(document.getElementById('changedByFilter')?.value||''),
     changedFrom:(document.getElementById('changedFromFilter')?.value||''),
-    changedTo:(document.getElementById('changedToFilter')?.value||'')
+    changedTo:(document.getElementById('changedToFilter')?.value||''),
+    customizationTypes:selectedCustomizationTypes()
   };
   renderFilterState();
 }
 function activeAdvancedFilterCount(){
   const f=state.filters||{};
-  return ['changedBy','changedFrom','changedTo'].filter(k=>String(f[k]||'').trim()).length;
+  const all=new Set(['Base','Custom','Overlay']);
+  const selected=new Set((f.customizationTypes||[]));
+  const ctChanged=selected.size!==all.size || [...all].some(x=>!selected.has(x));
+  return ['changedBy','changedFrom','changedTo'].filter(k=>String(f[k]||'').trim()).length + (ctChanged?1:0);
 }
 function renderFilterState(){
   const count=activeAdvancedFilterCount();
@@ -350,6 +365,8 @@ function clearFilters(){
   if(document.getElementById('changedByFilter'))changedByFilter.value='';
   if(document.getElementById('changedFromFilter'))changedFromFilter.value='';
   if(document.getElementById('changedToFilter'))changedToFilter.value='';
+  for(const id of ['ctBase','ctCustom','ctOverlay']){const el=document.getElementById(id);if(el){el.dataset.initialized='';}}
+  ensureCustomizationChecks();
   readFilters();
   state.offset=0;
   renderFilterState();
@@ -372,17 +389,29 @@ function onSearchInput(){
   clearTimeout(state.searchTimer);
   state.searchTimer=setTimeout(()=>{state.offset=0;loadCurrentObjects().catch(e=>setStatus(e.message));},250);
 }
+function customizationFilterParam(){
+  const vals=state.filters.customizationTypes||[];
+  const all=['Base','Custom','Overlay'];
+  if(!vals.length || vals.length===all.length && all.every(x=>vals.includes(x)))return '';
+  return vals.join(',');
+}
+
 function rowMatchesFilters(o){
   const f=state.filters||{};
   const name=(f.name||'').toLowerCase();
   const by=(f.changedBy||'').toLowerCase();
   const from=f.changedFrom?new Date(f.changedFrom).getTime():null;
   const to=f.changedTo?new Date(f.changedTo).getTime():null;
-  const ts=o.timestamp?new Date(String(o.timestamp).replace(' UTC','Z')).getTime():null;
+  const tsText=o.timestamp||o.sourceTimestamp||o.targetTimestamp||'';
+  const ts=tsText?new Date(String(tsText).replace(' UTC','Z')).getTime():null;
+  const byText=`${o.lastChangedBy||''} ${o.sourceLastChangedBy||''} ${o.targetLastChangedBy||''}`.toLowerCase();
+  const ctSet=new Set((f.customizationTypes||[]).map(x=>String(x).toLowerCase()));
+  const ct=String(o.customizationType||o.sourceCustomizationType||o.targetCustomizationType||'Base').toLowerCase();
   return (!name || String(o.name||'').toLowerCase().includes(name))
-    && (!by || String(o.lastChangedBy||'').toLowerCase().includes(by))
+    && (!by || byText.includes(by))
     && (!from || (ts && ts>=from))
-    && (!to || (ts && ts<=to));
+    && (!to || (ts && ts<=to))
+    && (!ctSet.size || ctSet.has(ct));
 }
 
 function setViewMode(mode){
@@ -406,17 +435,36 @@ async function loadDifferenceObjects(){
   state.loadingObjects=true;
   renderPager();
   setStatus(`Loading differences for ${TYPE_LABEL[state.type]} ${state.source.toUpperCase()} ↔ ${state.target.toUpperCase()}...`);
-  const r=await api(`/api/differences?source=${encodeURIComponent(state.source)}&target=${encodeURIComponent(state.target)}&object_type=${encodeURIComponent(state.type)}`);
+  readFilters();
+  const params=new URLSearchParams({
+    source:state.source,
+    target:state.target,
+    object_type:state.type,
+    limit:String(state.pageSize),
+    offset:String(state.offset),
+    sort:state.sortKey||'name',
+    direction:state.sortDir||'asc'
+  });
+  if(state.statusFilter)params.set('status',state.statusFilter);
+  if(state.filters.name)params.set('name_q',state.filters.name);
+  if(state.filters.changedBy)params.set('changed_by_q',state.filters.changedBy);
+  if(state.filters.changedFrom)params.set('changed_from',state.filters.changedFrom);
+  if(state.filters.changedTo)params.set('changed_to',state.filters.changedTo);
+  {const ctParam=customizationFilterParam();if(ctParam)params.set('customization_types',ctParam);}
+  const r=await api(`/api/differences?${params.toString()}`);
   state.diff=r;
-  state.objects=(r.objects||[]).map(o=>({...o,objectType:state.type,timestamp:o.timestamp||'',lastChangedBy:o.lastChangedBy||''}));
-  state.total=state.objects.length;
-  state.offset=0;
+  state.objects=(r.objects||[]).map(o=>({...o,objectType:state.type,timestamp:o.timestamp||o.sourceTimestamp||o.targetTimestamp||'',lastChangedBy:o.lastChangedBy||o.sourceLastChangedBy||o.targetLastChangedBy||''}));
+  state.total=r.total||0;
+  state.offset=r.offset||0;
+  state.pageSize=r.limit||state.pageSize;
   state.loadingObjects=false;
   renderRows();
   renderPager();
   renderTree();
   renderHeader();
-  setStatus(`${state.total} difference(s) shown for ${TYPE_LABEL[state.type]} ${state.source.toUpperCase()} ↔ ${state.target.toUpperCase()}`);
+  const from=state.total?state.offset+1:0;
+  const to=Math.min(state.offset+state.objects.length,state.total);
+  setStatus(`${from}-${to} of ${state.total} difference(s) shown for ${TYPE_LABEL[state.type]} ${state.source.toUpperCase()} ↔ ${state.target.toUpperCase()}`);
 }
 async function loadSourceObjects(){
   savePair();
@@ -432,9 +480,10 @@ async function loadSourceObjects(){
   const changedFromQ=encodeURIComponent(state.filters.changedFrom||'');
   const changedToQ=encodeURIComponent(state.filters.changedTo||'');
   const changedByQ=encodeURIComponent(state.filters.changedBy||'');
+  const customizationQ=encodeURIComponent(customizationFilterParam());
   const sort=encodeURIComponent(state.sortKey||'name');
   const dir=encodeURIComponent(state.sortDir||'asc');
-  const r=await api(`/api/objects/${state.type}?environment=${encodeURIComponent(state.source)}&name_q=${nameQ}&changed_from=${changedFromQ}&changed_to=${changedToQ}&changed_by_q=${changedByQ}&limit=${state.pageSize}&offset=${state.offset}&sort=${sort}&direction=${dir}`);
+  const r=await api(`/api/objects/${state.type}?environment=${encodeURIComponent(state.source)}&name_q=${nameQ}&changed_from=${changedFromQ}&changed_to=${changedToQ}&changed_by_q=${changedByQ}&customization_types=${customizationQ}&limit=${state.pageSize}&offset=${state.offset}&sort=${sort}&direction=${dir}`);
   state.objects=r.objects||[];
   state.total=r.total||0;
   state.offset=r.offset||0;
@@ -452,10 +501,11 @@ function pageNext(){if(state.offset+state.pageSize>=state.total)return;state.off
 function changePageSize(v){state.pageSize=parseInt(v,10)||100;state.offset=0;loadCurrentObjects().catch(e=>setStatus(e.message));}
 function renderPager(){
   if(!document.getElementById('pager'))return;
-  if(state.mode==='compare' || state.mode==='differences'){pager.innerHTML='';return;}
+  if(state.mode==='compare'){pager.innerHTML='';return;}
   const from=state.total?state.offset+1:0;
   const to=Math.min(state.offset+(state.objects?.length||0),state.total||0);
-  pager.innerHTML=`<span>${state.loadingObjects?'Loading...':`Showing ${from}-${to} of ${state.total||0}`}</span><button class="ghost" onclick="pagePrev()" ${state.offset<=0?'disabled':''}>Previous</button><button class="ghost" onclick="pageNext()" ${state.offset+state.pageSize>=state.total?'disabled':''}>Next</button><label>Page size <select onchange="changePageSize(this.value)"><option ${state.pageSize===100?'selected':''}>100</option><option ${state.pageSize===250?'selected':''}>250</option><option ${state.pageSize===500?'selected':''}>500</option><option ${state.pageSize===1000?'selected':''}>1000</option><option ${state.pageSize===2000?'selected':''}>2000</option></select></label>`;
+  const modeText=state.mode==='differences'?'differences':'objects';
+  pager.innerHTML=`<span>${state.loadingObjects?'Loading...':`Showing ${from}-${to} of ${state.total||0} ${modeText}`}</span><button class="ghost" onclick="pagePrev()" ${state.offset<=0?'disabled':''}>Previous</button><button class="ghost" onclick="pageNext()" ${state.offset+state.pageSize>=state.total?'disabled':''}>Next</button><label>Page size <select onchange="changePageSize(this.value)"><option ${state.pageSize===100?'selected':''}>100</option><option ${state.pageSize===250?'selected':''}>250</option><option ${state.pageSize===500?'selected':''}>500</option><option ${state.pageSize===1000?'selected':''}>1000</option><option ${state.pageSize===2000?'selected':''}>2000</option></select></label>`;
 }
 async function compareSelected(){
   if(!state.selected.length){await notifyDialog('Nothing selected','Select at least one object from the source environment.');return;}
@@ -489,23 +539,25 @@ ${state.source.toUpperCase()} → ${state.target.toUpperCase()}`);
 }
 function clearCompare(){state.compare=null;state.mode='browse';summary.innerHTML='';renderRows();renderHeader()}
 function selectedKey(t,n){return `${t}::${n}`} function isSelected(t,n){return state.selected.some(x=>selectedKey(x.objectType,x.name)===selectedKey(t,n))}
-function toggleSelected(name){const key=selectedKey(state.type,name);const i=state.selected.findIndex(x=>selectedKey(x.objectType,x.name)===key);if(i>=0)state.selected.splice(i,1);else{const row=(state.objects||[]).find(o=>o.name===name)||{};state.selected.push({type:TYPE_TO_EXPORT[state.type]||1,objectType:state.type,name,status:row.status||''});}renderSelected();renderRows()}
+function toggleSelected(name){const key=selectedKey(state.type,name);const i=state.selected.findIndex(x=>selectedKey(x.objectType,x.name)===key);if(i>=0)state.selected.splice(i,1);else{const row=(state.objects||[]).find(o=>o.name===name)||{};state.selected.push({type:TYPE_TO_EXPORT[state.type]||1,objectType:state.type,name,status:row.status||'',customizationType:row.customizationType||row.sourceCustomizationType||row.targetCustomizationType||''});}renderSelected();renderRows()}
 function visibleRows(){return rowsForRender()}
-function toggleSelectAllVisible(checked){const rows=visibleRows();for(const o of rows){const key=selectedKey(state.type,o.name);const exists=state.selected.findIndex(x=>selectedKey(x.objectType,x.name)===key);if(checked && exists<0)state.selected.push({type:TYPE_TO_EXPORT[state.type]||1,objectType:state.type,name:o.name,status:o.status||''});if(!checked && exists>=0)state.selected.splice(exists,1)}renderSelected();renderRows()}
+function toggleSelectAllVisible(checked){const rows=visibleRows();for(const o of rows){const key=selectedKey(state.type,o.name);const exists=state.selected.findIndex(x=>selectedKey(x.objectType,x.name)===key);if(checked && exists<0)state.selected.push({type:TYPE_TO_EXPORT[state.type]||1,objectType:state.type,name:o.name,status:o.status||'',customizationType:o.customizationType||o.sourceCustomizationType||o.targetCustomizationType||''});if(!checked && exists>=0)state.selected.splice(exists,1)}renderSelected();renderRows()}
 async function copyName(name){
   try{await navigator.clipboard.writeText(name);setStatus(`Copied name: ${name}`);}
   catch(e){await notifyDialog('Copy object name', name);}
 }
-function setStatusFilter(s){state.statusFilter=state.statusFilter===s?'':s;renderRows()}
+function setStatusFilter(s){state.statusFilter=state.statusFilter===s?'':s;state.offset=0;if(state.mode==='differences')loadDifferenceObjects().catch(e=>setStatus(e.message));else renderRows()}
 function displayStatus(s){return s==='missing_in_source'?'Only in target':s==='missing_in_target'?'Only in source':String(s||'').replaceAll('_',' ')}
 
 function sortValue(o,key){
   if(key==='name')return (o.name||'').toLowerCase();
   if(key==='status')return (o.status||'').toLowerCase();
-  if(key==='lastChangedBy')return (o.lastChangedBy||'').toLowerCase();
-  if(key==='timestamp'){
-    const raw=o.timestamp||'';
-    const d=Date.parse(raw);
+  if(key==='lastChangedBy'||key==='sourceLastChangedBy')return (o.sourceLastChangedBy||o.lastChangedBy||'').toLowerCase();
+  if(key==='targetLastChangedBy')return (o.targetLastChangedBy||'').toLowerCase();
+  if(key==='customizationType')return (o.customizationType||o.sourceCustomizationType||o.targetCustomizationType||'').toLowerCase();
+  if(key==='timestamp'||key==='sourceTimestamp'||key==='targetTimestamp'){
+    const raw=(key==='targetTimestamp'?o.targetTimestamp:(o.sourceTimestamp||o.timestamp))||'';
+    const d=Date.parse(String(raw).replace(' UTC','Z'));
     if(!Number.isNaN(d))return d;
     const m=String(raw).match(/\d+/);
     return m?Number(m[0]):0;
@@ -528,7 +580,7 @@ function applySort(rows){
 function setSort(key){
   if(state.sortKey===key)state.sortDir=state.sortDir==='asc'?'desc':'asc';
   else{state.sortKey=key;state.sortDir='asc';}
-  if(state.mode==='browse'){state.offset=0;loadCurrentObjects().catch(e=>setStatus(e.message));}
+  if(state.mode==='browse'||state.mode==='differences'){state.offset=0;loadCurrentObjects().catch(e=>setStatus(e.message));}
   else renderRows();
 }
 function rowsForRender(){
@@ -540,7 +592,7 @@ function rowsForRender(){
   } else if(state.mode==='differences'){
     const sum=state.diff?.summary||{};
     summary.innerHTML=Object.entries(sum).filter(([k,v])=>['different','missing_in_source','missing_in_target'].includes(k)&&Number(v)>0).map(([k,v])=>`<span onclick="setStatusFilter('${k}')" class="pill status-badge ${statusBadgeClass(k)} ${state.statusFilter===k?'filter-active':''}"><strong>${v}</strong> ${displayStatus(k)}</span>`).join('') || '<span class="pill ok">No differences</span>';
-    rows=(state.objects||[]).filter(o=>rowMatchesFilters(o)&&(!state.statusFilter||o.status===state.statusFilter));
+    rows=(state.objects||[]);
   } else {
     summary.innerHTML=`<span class="pill"><strong>${state.total||0}</strong> source objects</span>`;
     // Browse mode is filtered server-side across separate Name, Timestamp and Last Changed By fields.
@@ -556,8 +608,13 @@ function renderRows(){
     const statusText=compared?displayStatus(o.status):'source';
     const sourceMark=(state.mode==='differences' && o.status==='missing_in_source')?'-':'✓';
     const targetMark=(state.mode==='differences' && o.status==='missing_in_target')?'-':(compared?(o.status==='missing_in_target'?'-':'✓'):'-');
-    return `<tr class="${checked?'selected':''}"><td class="select-all-cell"><input class="check" type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation();toggleSelected('${esc(o.name)}')"></td><td><span class="name-link" onclick="toggleSelected('${esc(o.name)}')">${html(o.name)}</span></td><td class="copy-cell"><button class="ghost copy-btn" title="Copy name" onclick="event.stopPropagation();copyName('${esc(o.name)}')">⧉</button></td><td class="small muted mono">${html(o.timestamp||'')}</td><td class="small muted">${html(o.lastChangedBy||'')}</td><td class="s-${o.status}">${statusText}</td><td>${sourceMark}</td><td>${targetMark}</td><td><button class="ghost" onclick='showDetail(${JSON.stringify(o).replaceAll("'","&#39;")})'>Details</button></td></tr>`
-  }).join('')||'<tr><td colspan="9" class="muted">No objects match the filter, or the cache is not ready yet.</td></tr>';
+    const sourceTs=o.sourceTimestamp||o.timestamp||'';
+    const sourceBy=o.sourceLastChangedBy||o.lastChangedBy||'';
+    const targetTs=o.targetTimestamp||'';
+    const targetBy=o.targetLastChangedBy||'';
+    const custom=o.customizationType||o.sourceCustomizationType||o.targetCustomizationType||'';
+    return `<tr class="${checked?'selected':''}"><td class="select-all-cell"><input class="check" type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation();toggleSelected('${esc(o.name)}')"></td><td><span class="name-link" onclick="toggleSelected('${esc(o.name)}')">${html(o.name)}</span></td><td class="copy-cell"><button class="ghost copy-btn" title="Copy name" onclick="event.stopPropagation();copyName('${esc(o.name)}')">⧉</button></td><td class="small muted mono">${html(sourceTs)}</td><td class="small muted">${html(sourceBy)}</td><td class="small muted mono">${html(targetTs)}</td><td class="small muted">${html(targetBy)}</td><td class="small muted">${html(custom)}</td><td class="s-${o.status}">${statusText}</td><td>${sourceMark}</td><td>${targetMark}</td><td><button class="ghost" onclick='showDetail(${JSON.stringify(o).replaceAll("'","&#39;")})'>Details</button></td></tr>`
+  }).join('')||'<tr><td colspan="12" class="muted">No objects match the filter, or the cache is not ready yet.</td></tr>';
   const allVisible=rows.length>0 && rows.every(o=>isSelected(state.type,o.name));
   if(document.getElementById('selectAllBox'))selectAllBox.checked=allVisible;
   renderSelected();renderPager();
@@ -876,7 +933,7 @@ function selectedItemsForDirection(reverse=false){
   if(state.mode!=='differences')return state.selected;
   const selectedNames=new Set(state.selected.map(x=>x.name));
   const rows=(state.objects||[]).filter(o=>selectedNames.has(o.name));
-  return rows.filter(o=>reverse?o.status!=='missing_in_target':o.status!=='missing_in_source').map(o=>({type:TYPE_TO_EXPORT[state.type]||1,objectType:state.type,name:o.name,status:o.status||''}));
+  return rows.filter(o=>reverse?o.status!=='missing_in_target':o.status!=='missing_in_source').map(o=>({type:TYPE_TO_EXPORT[state.type]||1,objectType:state.type,name:o.name,status:o.status||'',customizationType:o.customizationType||o.sourceCustomizationType||o.targetCustomizationType||''}));
 }
 async function migrateDifferenceDirection(reverse=false){
   if(state.mode!=='differences')return startMigration();

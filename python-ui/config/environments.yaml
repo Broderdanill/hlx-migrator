@@ -14,6 +14,8 @@ environments:
 scope:
   include_form_prefixes: ["HLX*"]
   exclude_form_prefixes: []
+  customization_types:
+    default: ["Base", "Custom", "Overlay"]
 sync:
   auto_start: true
   include_global: true
