@@ -530,3 +530,10 @@ Copyright © HLX.
 
 - Fixed row **Details** action after the resizable-column optimization.
 - Details now opens from the current rendered row index without embedding large JSON payloads in the table HTML.
+
+
+## 1.1.15
+
+- Updated button styling to a flatter, more modern single-colour appearance.
+- Removed gradient/radial colour shifts from buttons and busy/sync button states.
+
