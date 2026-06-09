@@ -545,3 +545,10 @@ Copyright © HLX.
 - Standardized panels, tables, buttons, filters, modal windows, and activity log styling.
 - Improved filter alignment and spacing, including the customization filter.
 - Kept the existing dark BMC-inspired palette while reducing heavy shadows and visual noise.
+
+
+### 1.1.17
+
+- Tightened the visual layout for better overview when working with many objects.
+- Reduced table row height and made table controls more compact.
+- Kept the modern dark theme while improving density in the object lists, sidebar, filters, and activity log.

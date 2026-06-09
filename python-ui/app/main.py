@@ -21,7 +21,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.1.14")
+app = FastAPI(title="HLX Migrator", version="1.1.17")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
