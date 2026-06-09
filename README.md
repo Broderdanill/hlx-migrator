@@ -552,3 +552,12 @@ Copyright © HLX.
 - Tightened the visual layout for better overview when working with many objects.
 - Reduced table row height and made table controls more compact.
 - Kept the modern dark theme while improving density in the object lists, sidebar, filters, and activity log.
+
+### 1.1.18
+
+UI layout polish:
+
+- Moved paging/page-size controls and Reset columns into the table section where they logically belong.
+- Changed Status / Activity Log from a fixed overlay to a normal panel below the result table, avoiding overlap with long result lists.
+- Kept compact table row styling from 1.1.17.
+

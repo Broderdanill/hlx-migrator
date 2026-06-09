@@ -113,7 +113,18 @@
   
     /* 1.1.17 compact overview refinements */
     .toolbar h2,.toolbar h3{margin:0;line-height:1.15}.top-actions button,.top-actions .pill{min-height:26px;padding-top:3px;padding-bottom:3px}.pill{padding:2px 8px}.badge{padding:1px 7px}.name-filter{height:31px}.action-buttons button{height:31px}.filter-toggle,.selected-badge{height:29px;padding-top:3px;padding-bottom:3px}.ct-dropdown-button{height:29px}.pager{font-size:12px}.table-wrap{border-radius:9px}.resizable-table{font-size:12px}.resizable-table th{height:28px;padding:4px 8px}.resizable-table td{height:27px;padding:3px 8px;line-height:1.15}.resizable-table tbody tr{height:27px;contain-intrinsic-size:27px}.resizable-table .check,.select-all-cell input{width:13px;height:13px}.copy-btn{min-height:22px;min-width:26px;padding:1px 6px}.resizable-table td button.ghost{min-height:24px;padding:2px 8px}.content-grid{border-radius:9px}.activity-log{font-size:12px}.modal-head{padding:11px 14px}.modal-body{padding:10px}.tree button{min-height:32px;padding-top:7px;padding-bottom:7px}.main{gap:9px}.panel-pad{padding:9px}
-  </style>
+  
+    /* 1.1.18 layout polish: keep table controls with the table and make Activity Log part of the normal page flow. */
+    .main{height:calc(100vh - 58px);overflow:auto;padding-bottom:10px}
+    body.activity-expanded .main{padding-bottom:10px}
+    .activity-panel{position:static;left:auto;right:auto;bottom:auto;z-index:auto;margin:0;box-shadow:none}
+    .activity-panel .activity-head{padding:7px 10px}
+    .content-grid{display:flex;flex-direction:column;gap:8px;min-height:0}
+    .table-section-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 9px;border-radius:9px}
+    .table-pager{margin:0;gap:8px;align-items:center}
+    .table-pager select{height:28px}
+    .table-wrap{overflow:auto;min-height:0}
+</style>
 </head>
 <body>
 <header>
@@ -154,7 +165,7 @@
   <main class="main">
     <section class="panel panel-pad">
       <div class="toolbar">
-        <div class="row"><strong id="tableTitle">Forms</strong><span id="summary" class="summary"></span><button class="ghost small" title="Reset table column widths" onclick="resetColumnWidths()">Reset columns</button></div>
+        <div class="row"><strong id="tableTitle">Forms</strong><span id="summary" class="summary"></span></div>
       </div>
       <div class="filter-main-row">
         <input id="nameFilter" class="name-filter" placeholder="Name..." oninput="onSearchInput()">
@@ -185,9 +196,12 @@
         </div>
         <button class="ghost" onclick="clearFilters()">Clear Filters</button>
       </div>
-      <div id="pager" class="row small muted" style="margin-top:8px"></div>
     </section>
     <section class="content-grid">
+      <div class="table-section-toolbar panel panel-pad">
+        <div id="pager" class="row small muted table-pager"></div>
+        <button class="ghost small" title="Reset table column widths" onclick="resetColumnWidths()">Reset columns</button>
+      </div>
       <div class="panel table-wrap"><table id="resultTable" class="resizable-table"><colgroup id="resultColGroup"><col data-col="select"><col data-col="name"><col data-col="copy"><col data-col="sourceTimestamp"><col data-col="sourceLastChangedBy"><col data-col="targetTimestamp"><col data-col="targetLastChangedBy"><col data-col="customizationType"><col data-col="status"><col data-col="source"><col data-col="target"><col data-col="details"></colgroup><thead><tr><th class="select-all-cell" data-col="select"><input id="selectAllBox" class="check" type="checkbox" onchange="toggleSelectAllVisible(this.checked)"></th><th class="sortable col-resizable" data-col="name" onclick="setSort('name')">Name <span id="sort_name" class="sort-ind"></span><span class="resize-handle" onmousedown="startColumnResize(event,'name')"></span></th><th class="copy-cell" data-col="copy">Copy</th><th class="sortable col-resizable" data-col="sourceTimestamp" onclick="setSort('sourceTimestamp')">Source Timestamp <span id="sort_sourceTimestamp" class="sort-ind"></span><span class="resize-handle" onmousedown="startColumnResize(event,'sourceTimestamp')"></span></th><th class="sortable col-resizable" data-col="sourceLastChangedBy" onclick="setSort('sourceLastChangedBy')">Source Changed By <span id="sort_sourceLastChangedBy" class="sort-ind"></span><span class="resize-handle" onmousedown="startColumnResize(event,'sourceLastChangedBy')"></span></th><th class="sortable col-resizable" data-col="targetTimestamp" onclick="setSort('targetTimestamp')">Target Timestamp <span id="sort_targetTimestamp" class="sort-ind"></span><span class="resize-handle" onmousedown="startColumnResize(event,'targetTimestamp')"></span></th><th class="sortable col-resizable" data-col="targetLastChangedBy" onclick="setSort('targetLastChangedBy')">Target Changed By <span id="sort_targetLastChangedBy" class="sort-ind"></span><span class="resize-handle" onmousedown="startColumnResize(event,'targetLastChangedBy')"></span></th><th class="sortable col-resizable" data-col="customizationType" onclick="setSort('customizationType')">Customization <span id="sort_customizationType" class="sort-ind"></span><span class="resize-handle" onmousedown="startColumnResize(event,'customizationType')"></span></th><th class="sortable col-resizable" data-col="status" onclick="setSort('status')">Status <span id="sort_status" class="sort-ind"></span><span class="resize-handle" onmousedown="startColumnResize(event,'status')"></span></th><th class="col-resizable" data-col="source">Source<span class="resize-handle" onmousedown="startColumnResize(event,'source')"></span></th><th class="col-resizable" data-col="target">Target<span class="resize-handle" onmousedown="startColumnResize(event,'target')"></span></th><th class="col-resizable" data-col="details">Details<span class="resize-handle" onmousedown="startColumnResize(event,'details')"></span></th></tr></thead><tbody id="resultRows"></tbody></table></div>
     </section>
     <section id="activityPanel" class="panel activity-panel collapsed">
