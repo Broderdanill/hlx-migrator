@@ -537,3 +537,11 @@ Copyright © HLX.
 - Updated button styling to a flatter, more modern single-colour appearance.
 - Removed gradient/radial colour shifts from buttons and busy/sync button states.
 
+
+
+### 1.1.16
+
+- Refreshed the visual design for a more modern dark UI.
+- Standardized panels, tables, buttons, filters, modal windows, and activity log styling.
+- Improved filter alignment and spacing, including the customization filter.
+- Kept the existing dark BMC-inspired palette while reducing heavy shadows and visual noise.
