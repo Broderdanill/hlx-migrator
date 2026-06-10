@@ -589,7 +589,8 @@ UI layout polish:
 
 
 ## Recent changes
-- **1.1.23**: Made result-table rows even more compact for high-volume object lists, with tighter cells, checkboxes, and row action buttons.
+- **1.1.24**: Kept the 12px table font while reducing table padding/controls for compact rows, and clarified the shared-cache/multi-user diff model.
+- **1.1.23**: Moved source/destination into the header and tightened navigation/table spacing.
 
 
 ## 1.1.23
@@ -598,3 +599,10 @@ UI layout polish:
 - Made result rows significantly more compact for large object lists.
 - Added Enter-to-login support in password/auth fields.
 - Tightened navigation and table spacing.
+
+
+## 1.1.24
+
+- Restored/kept the normal table font size and made rows compact by reducing padding, button height and cell spacing instead of shrinking text.
+- Documented the intended multi-user model: metadata and difference indexes are shared by environment pair, while browser selection/filter/login state remains user-local.
+- Read-only Browse/Differences/Compare operations are designed to run in parallel across users; write operations still lock the affected target environment.
