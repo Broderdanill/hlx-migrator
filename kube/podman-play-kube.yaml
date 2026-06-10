@@ -17,12 +17,21 @@ data:
         rpc: 390620
         locale: sv_SE
         timezone: Europe/Stockholm
+
     scope:
       include_form_prefixes: ["HLX*"]
       exclude_form_prefixes: []
+      customization_types:
+        default:
+          - Base
+          - Custom
+          - Overlay
+        include_unknown: true
+
     ui:
       page_size: 100
       max_page_size: 2000
+
     diff:
       ignore_order: true
       ignore_keys:
@@ -40,16 +49,20 @@ data:
         - createDate
         - modifiedBy
         - lastModifiedDate
+
     sync:
       auto_start: true
       include_global: true
       continue_on_error: true
+
       details: true
       details_concurrency: 2
       details_max_per_type: 0
       details_refresh_existing: false
+
       incremental: true
       purge_missing: false
+
       detail_object_types:
         - form
         - active_link
@@ -61,6 +74,9 @@ data:
         - packing_list
         - application
         - image
+        - web_service
+        - association
+
       object_types:
         forms: true
         form_details: false
@@ -77,6 +93,8 @@ data:
         applications: true
         containers: false
         images: true
+        web_services: true
+        associations: true
 ---
 apiVersion: v1
 kind: Secret
@@ -118,6 +136,10 @@ spec:
           value: "/app/data"
         - name: HLX_AUTO_SERVER_SYNC
           value: "true"
+        - name: HLX_AUTO_SYNC_START_DELAY_SECONDS
+          value: "5"
+        - name: HLX_AUTO_SYNC_LOGIN_RETRIES
+          value: "3"
         - name: LOG_LEVEL
           value: "INFO"
       volumeMounts:
@@ -131,6 +153,7 @@ spec:
           readOnly: true
         - name: data
           mountPath: /app/data
+
     - name: hlx-migrator-backend
       image: localhost/hlx-migrator-backend:latest
       imagePullPolicy: Never
@@ -155,6 +178,7 @@ spec:
           readOnly: true
         - name: data
           mountPath: /data
+
   volumes:
     - name: config
       configMap:
