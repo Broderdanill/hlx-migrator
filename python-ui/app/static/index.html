@@ -155,7 +155,8 @@
     .top-env-pair select{background:#082138!important;border:1px solid var(--line2)!important;border-radius:7px!important;color:var(--text)!important}
     .top-env-pair select:hover{background:#092943!important;border-color:#00b9f6!important}
 
-.sync-card-progress{margin:8px 0 10px}.sync-card-progress.compact{margin:6px 0}.sync-card-progress .sync-progress-label{display:flex;justify-content:space-between;gap:12px;align-items:center}.sync-card-progress .sync-progress-label strong{color:#f7f7f7;font-weight:700}</style>
+.sync-card-progress{margin:8px 0 10px}.sync-card-progress.compact{margin:6px 0}.sync-card-progress .sync-progress-label{display:flex;justify-content:space-between;gap:12px;align-items:center}.sync-card-progress .sync-progress-label strong{color:#f7f7f7;font-weight:700}
+    .rel-layout{display:flex;flex-direction:column;gap:12px}.rel-summary{display:flex;gap:8px;flex-wrap:wrap}.rel-summary-card{min-width:110px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#082138}.rel-summary-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.rel-summary-value{font-size:18px;font-weight:700;line-height:1.1;margin-top:2px}.rel-flow{display:grid;grid-template-columns:minmax(220px,1fr) 220px minmax(220px,1fr);gap:14px;align-items:start}.rel-column{display:flex;flex-direction:column;gap:8px}.rel-column h4{margin:0 0 2px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.rel-list{display:flex;flex-direction:column;gap:8px}.rel-item{position:relative;border:1px solid rgba(0,185,246,.24);border-radius:11px;background:rgba(8,33,56,.82);padding:8px 10px;min-height:58px;display:flex;flex-direction:column;justify-content:center;gap:3px;box-shadow:inset 0 1px 0 rgba(255,255,255,.02)}.rel-item.incoming{border-left:3px solid #ffcc33}.rel-item.outgoing{border-right:3px solid #00b9f6}.rel-item.logic{border-left:3px solid #49c449}.rel-item-arrow{position:absolute;top:50%;transform:translateY(-50%);font-size:18px;font-weight:700;color:var(--accent)}.rel-item.incoming .rel-item-arrow{right:8px}.rel-item.outgoing .rel-item-arrow{left:8px}.rel-item.logic .rel-item-arrow{right:8px}.rel-item-type{font-size:10.5px;color:#9ad9ef;text-transform:uppercase;letter-spacing:.06em}.rel-item-name{font-size:13px;font-weight:700;color:#f7f7f7;padding-right:18px;padding-left:18px;word-break:break-word}.rel-item-meta{font-size:11px;color:var(--muted);padding-right:18px;padding-left:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rel-scope{display:inline-flex;align-items:center;gap:5px;padding:1px 7px;border:1px solid rgba(0,185,246,.22);border-radius:999px;background:rgba(0,185,246,.07);font-size:10px;color:#dcedfb;margin-left:6px}.rel-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:100%}.rel-center-lines{display:flex;justify-content:center;gap:12px;width:100%;color:var(--muted);font-size:22px}.rel-node{padding:18px 14px;min-height:110px;border:1px solid var(--line2);border-radius:16px;background:linear-gradient(180deg,rgba(22,90,155,.22),rgba(8,33,56,.92));display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:0 10px 28px rgba(0,0,0,.28)}.rel-node-title{font-size:17px;font-weight:800;word-break:break-word}.rel-node-sub{margin-top:4px;color:#c4d6e6}.rel-empty{padding:14px;border:1px dashed rgba(0,185,246,.18);border-radius:10px;color:var(--muted);background:rgba(6,24,39,.45)}.rel-legend{display:flex;gap:8px;flex-wrap:wrap}.rel-legend .pill{padding:2px 8px}.rel-raw details{border:1px solid var(--line);border-radius:10px;background:#082138}.rel-raw summary{cursor:pointer;list-style:none;padding:9px 11px;font-weight:700}.rel-raw summary::-webkit-details-marker{display:none}.rel-table{width:100%;border-collapse:collapse}.rel-table th,.rel-table td{padding:5px 8px;border-bottom:1px solid #1b2c47;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rel-table td:last-child,.rel-table th:last-child{white-space:normal}.rel-tech-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rel-chip-grid{display:flex;flex-wrap:wrap;gap:6px}.rel-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid rgba(0,185,246,.2);border-radius:999px;background:rgba(0,185,246,.06);color:#eef8ff}.rel-type{font-size:10px;color:#9ad9ef;text-transform:uppercase;letter-spacing:.04em}.rel-note{padding:10px 12px;border:1px solid rgba(0,185,246,.14);border-radius:10px;background:rgba(0,185,246,.04)}@media(max-width:1080px){.rel-flow{grid-template-columns:1fr}.rel-center-lines{display:none}.rel-tech-grid{grid-template-columns:1fr}}</style>
 </head>
 <body>
 <header>
@@ -1084,9 +1085,115 @@ function extractRelationsFromObject(obj, objectType, objectName){
   walk(obj||{});
   return rels;
 }
+function normalizeRelationshipValue(type, value){
+  const raw=String(value??'').trim();
+  if(!raw)return '';
+  if(type==='Form' && raw==='@') return 'Current form';
+  if(type==='Reference' && /^\d+$/.test(raw)) return `Field ${raw}`;
+  if(type==='Execution' && /^\d+$/.test(raw)) return `Execution order ${raw}`;
+  return raw;
+}
+function relationDirectionGroup(rel){
+  const path=String(rel.path||'').toLowerCase();
+  const label=String(rel.label||'').toLowerCase();
+  const type=String(rel.type||'');
+  if(type==='Qualification' || path.includes('qualification') || path.includes('runif') || label.includes('qualification')) return 'logic';
+  if(path.includes('input') || path.includes('condition') || path.includes('ifaction') || path.includes('elseaction')) return 'incoming';
+  if(path.includes('output') || path.includes('action') || path.includes('push') || path.includes('setfield') || path.includes('service') || path.includes('target')) return 'outgoing';
+  if(['Form','Active Link','Filter','Escalation','Menu','Guide','Web Service','Association','Container','Target'].includes(type)) return 'outgoing';
+  return 'technical';
+}
+function relationPriority(type){
+  return ({Form:1,'Active Link':2,Filter:2,Escalation:2,Guide:3,Menu:3,'Web Service':4,Association:4,Container:5,Qualification:6,Target:6,Execution:7,Reference:9})[type] ?? 8;
+}
+function isUsefulGraphRelation(rel){
+  const type=String(rel.type||'');
+  const value=String(rel.value||'');
+  if(!value || value==='Current form') return false;
+  if(type==='Reference') return false;
+  if(type==='Execution') return false;
+  if(type==='Qualification' && value.length>140) return false;
+  if(/^\d+$/.test(value) && !['Qualification'].includes(type)) return false;
+  return true;
+}
+function humanizeRelationMeta(rel){
+  const label=friendlyToken(rel.label||'reference');
+  const path=String(rel.path||'').split(' → ').slice(-2).join(' → ');
+  return path ? `${label} · ${path}` : label;
+}
+function summarizeRelationshipSet(srcR,tgtR){
+  const summary={total:0, forms:0, workflow:0, integrations:0, logic:0};
+  const all=[...srcR,...tgtR];
+  const seen=new Set();
+  all.forEach(rel=>{
+    const type=String(rel.type||'');
+    const value=normalizeRelationshipValue(type, rel.value);
+    const key=`${type}|${value}`;
+    if(!value || seen.has(key)) return;
+    seen.add(key); summary.total += 1;
+    if(type==='Form') summary.forms += 1;
+    else if(['Active Link','Filter','Escalation','Guide','Menu','Container'].includes(type)) summary.workflow += 1;
+    else if(['Web Service','Association','Target'].includes(type)) summary.integrations += 1;
+    else if(type==='Qualification') summary.logic += 1;
+  });
+  return summary;
+}
+function buildRelationshipGraph(srcR,tgtR){
+  const combinedMap=new Map();
+  function ingest(list, scope){
+    (list||[]).forEach(rel=>{
+      const type=String(rel.type||'Reference');
+      const value=normalizeRelationshipValue(type, rel.value);
+      const normalized={...rel, type, value};
+      const group=relationDirectionGroup(normalized);
+      const key=`${group}|${type}|${value}`;
+      if(!value) return;
+      let item=combinedMap.get(key);
+      if(!item){
+        item={group,type,value,scope:new Set(),meta:[],raw:[]};
+        combinedMap.set(key,item);
+      }
+      item.scope.add(scope);
+      if(item.meta.length<3){
+        const meta=humanizeRelationMeta(normalized);
+        if(!item.meta.includes(meta)) item.meta.push(meta);
+      }
+      item.raw.push(normalized);
+    });
+  }
+  ingest(srcR,'source'); ingest(tgtR,'target');
+  const items=[...combinedMap.values()].map(item=>({
+    ...item,
+    scopeText:item.scope.size===2?'Both':item.scope.has('source')?'Source':'Target',
+    useful:isUsefulGraphRelation(item),
+    rank:relationPriority(item.type),
+  }));
+  const primary=items.filter(x=>x.useful).sort((a,b)=>a.rank-b.rank || a.value.localeCompare(b.value));
+  const fallback=items.filter(x=>!x.useful).sort((a,b)=>a.rank-b.rank || a.value.localeCompare(b.value));
+  const incoming=primary.filter(x=>x.group==='incoming' || x.group==='logic').slice(0,7);
+  const outgoing=primary.filter(x=>x.group==='outgoing').slice(0,9);
+  if(!incoming.length && !outgoing.length){
+    outgoing.push(...fallback.filter(x=>x.group!=='incoming').slice(0,8));
+  }
+  const technical=fallback.slice(0,18);
+  return {incoming,outgoing,technical};
+}
+function renderRelationshipItem(item, direction){
+  const arrow=(direction==='incoming' || direction==='logic') ? '→' : '→';
+  const cls=direction==='incoming' || direction==='logic' ? direction : 'outgoing';
+  return `<div class="rel-item ${cls}"><div class="rel-item-arrow">${arrow}</div><div class="rel-item-type">${html(item.type)}<span class="rel-scope">${html(item.scopeText)}</span></div><div class="rel-item-name">${html(item.value)}</div><div class="rel-item-meta" title="${html((item.meta||[]).join(' • '))}">${html(item.meta?.[0]||'Related object')}</div></div>`;
+}
+function renderRelationshipColumn(title, items, direction, emptyText){
+  if(!items.length) return `<div class="rel-column"><h4>${html(title)}</h4><div class="rel-empty">${html(emptyText)}</div></div>`;
+  return `<div class="rel-column"><h4>${html(title)}</h4><div class="rel-list">${items.map(item=>renderRelationshipItem(item, direction)).join('')}</div></div>`;
+}
+function renderRelationshipTechnical(items){
+  if(!items.length) return '';
+  return `<div class="rel-note"><div class="small muted" style="margin-bottom:6px">Additional technical references found in the cached definition</div><div class="rel-chip-grid">${items.map(item=>`<span class="rel-chip" title="${html((item.meta||[]).join(' • '))}"><span class="rel-type">${html(item.type)}</span>${html(item.value)}</span>`).join('')}</div></div>`;
+}
 function renderRelationTable(title, rels){
   if(!rels.length)return `<section class="rel-section"><h3>${html(title)}</h3><div class="panel-pad muted">No obvious relationships found in the cached definition.</div></section>`;
-  const rows=rels.slice(0,160).map(r=>`<tr><td><span class="pill">${html(r.type)}</span></td><td>${html(r.label||'Reference')}</td><td>${html(r.value)}</td><td class="small muted">${html(r.path||'')}</td></tr>`).join('');
+  const rows=rels.slice(0,160).map(r=>`<tr><td><span class="pill">${html(r.type)}</span></td><td>${html(r.label||'Reference')}</td><td>${html(normalizeRelationshipValue(r.type,r.value))}</td><td class="small muted">${html(r.path||'')}</td></tr>`).join('');
   const more=rels.length>160?`<div class="small muted" style="padding:6px 9px">Showing 160 of ${rels.length} extracted relationships.</div>`:'';
   return `<section class="rel-section"><h3>${html(title)}</h3><table class="rel-table"><thead><tr><th>Type</th><th>Attribute</th><th>Related object/value</th><th>Where found</th></tr></thead><tbody>${rows}</tbody></table>${more}</section>`;
 }
@@ -1095,9 +1202,9 @@ function renderRelationships(c,o){
   const type=TYPE_LABEL[c?.objectType||state.type]||c?.objectType||state.type;
   const srcR=extractRelationsFromObject(c?.source,c?.objectType||state.type,name);
   const tgtR=extractRelationsFromObject(c?.target,c?.objectType||state.type,name);
-  const combined=[...srcR,...tgtR];
-  const chips=combined.slice(0,18).map(r=>`<span class="rel-chip" title="${html(r.path||'')}"><span class="rel-type">${html(r.type)}</span>${html(r.value)}</span>`).join('') || '<span class="muted">No cached relationships found</span>';
-  return `<div class="rel-layout"><div class="small muted">This view is built from cached ARAPI details. It highlights likely related forms, workflow, menus, guides, containers, web services and associations without making a new live ARAPI call.</div><div class="rel-graph"><div class="rel-chip-cloud">${chips}</div><div class="rel-node"><div class="rel-node-title">${html(name)}</div><div class="rel-node-sub">${html(type)}</div></div><div class="rel-chip-cloud">${combined.slice(18,36).map(r=>`<span class="rel-chip" title="${html(r.path||'')}"><span class="rel-type">${html(r.type)}</span>${html(r.value)}</span>`).join('') || '<span class="muted">Open the tables below for details</span>'}</div></div>${renderRelationTable('Source relationships',srcR)}${renderRelationTable('Target relationships',tgtR)}</div>`;
+  const summary=summarizeRelationshipSet(srcR,tgtR);
+  const graph=buildRelationshipGraph(srcR,tgtR);
+  return `<div class="rel-layout"><div class="small muted">This view uses cached ARAPI details to show the most important named relationships first. It focuses on related forms, workflow, menus, guides, containers, web services and associations without making a new live ARAPI call.</div><div class="rel-summary"><div class="rel-summary-card"><div class="rel-summary-label">Named relations</div><div class="rel-summary-value">${summary.total}</div></div><div class="rel-summary-card"><div class="rel-summary-label">Forms</div><div class="rel-summary-value">${summary.forms}</div></div><div class="rel-summary-card"><div class="rel-summary-label">Workflow</div><div class="rel-summary-value">${summary.workflow}</div></div><div class="rel-summary-card"><div class="rel-summary-label">Integrations</div><div class="rel-summary-value">${summary.integrations}</div></div><div class="rel-summary-card"><div class="rel-summary-label">Logic rules</div><div class="rel-summary-value">${summary.logic}</div></div></div><div class="rel-legend"><span class="pill">Source = only found in source</span><span class="pill">Target = only found in target</span><span class="pill">Both = found on both sides</span></div><div class="rel-flow">${renderRelationshipColumn('Reads / conditions',graph.incoming,'incoming','No clear input-side relationships were found.')}<div class="rel-center"><div class="rel-center-lines"><span>←</span><span>→</span></div><div class="rel-node"><div class="rel-node-title">${html(name)}</div><div class="rel-node-sub">${html(type)}</div></div><div class="small muted" style="text-align:center;max-width:180px">The selected object sits in the middle. Related objects are shown around it.</div></div>${renderRelationshipColumn('Actions / targets',graph.outgoing,'outgoing','No clear output-side relationships were found.')}</div>${renderRelationshipTechnical(graph.technical)}<div class="rel-raw"><details><summary>Show extracted relationship details</summary><div class="panel-pad small muted" style="padding-top:0">These raw extracted entries are useful for deeper troubleshooting when the visual overview is not enough.</div><div class="rel-tech-grid">${renderRelationTable('Source relationships',srcR)}${renderRelationTable('Target relationships',tgtR)}</div></details></div></div>`;
 }
 function renderFullDiffRows(rows){
   if(!rows||!rows.length)return '<div class="ok">No differences after normalization and configured ignore rules.</div>';
