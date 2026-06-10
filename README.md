@@ -623,3 +623,16 @@ UI layout polish:
 - Visual polish for the top bar: the current context is now shown next to the app title instead of being grouped with action controls.
 - Object type labels are slightly larger and easier to read.
 - Result table text is slightly larger while row height remains compact by reducing padding/margins rather than shrinking the font.
+
+
+### 1.1.27
+
+- Adjusted the header Source/Destination environment selectors so they use the same dark select styling as the table controls such as Page Size.
+- Improved hover and focus styling for the top-bar environment dropdowns.
+
+
+## 1.1.28
+
+- Added sync progress UI with percentage/phase indicator based on server-side sync jobs.
+- Added a Visual Summary diff tab that gives a more readable alternative to raw JSON while keeping the existing JSON views.
+- Deep metadata sync now emits throttled progress events per object type so the UI feels alive during long initial syncs.

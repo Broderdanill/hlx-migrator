@@ -22,7 +22,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.1.26")
+app = FastAPI(title="HLX Migrator", version="1.1.27")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -275,7 +275,7 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def add_job(env: str, object_type: str, status: str, message: str = "", counts: dict | None = None):
+def add_job(env: str, object_type: str, status: str, message: str = "", counts: dict | None = None, progress: int | float | None = None):
     job = {
         "time": now_iso(),
         "environment": env,
@@ -283,9 +283,18 @@ def add_job(env: str, object_type: str, status: str, message: str = "", counts: 
         "status": status,
         "message": message,
         "counts": counts or {},
+        "progress": progress,
     }
-    SERVER_CACHE_STATUS["jobs"].insert(0, job)
-    SERVER_CACHE_STATUS["jobs"] = SERVER_CACHE_STATUS["jobs"][:300]
+    jobs = SERVER_CACHE_STATUS.setdefault("jobs", [])
+    # Keep progress updates readable: repeated running events for the same
+    # environment/object phase update the latest row instead of flooding the log.
+    if status == "running" and jobs:
+        latest = jobs[0]
+        if latest.get("status") == "running" and latest.get("environment") == env and latest.get("objectType") == object_type:
+            latest.update(job)
+            return latest
+    jobs.insert(0, job)
+    SERVER_CACHE_STATUS["jobs"] = jobs[:300]
     return job
 
 
@@ -453,7 +462,7 @@ def build_difference_cache(source: str, target: str) -> dict:
             pair["summary"][object_type] = {"different": 0, "missing_in_source": 0, "missing_in_target": 0, "total": 0, "error": str(e)}
     DIFFERENCE_CACHE[pair_key] = pair
     _set_difference_pair(pair_key, pair)
-    add_job(source, "differences", "ok", f"Difference index built for {source.upper()} → {target.upper()}", {k: v.get("total", 0) for k, v in pair["summary"].items()})
+    add_job(source, "differences", "ok", f"Difference index built for {source.upper()} → {target.upper()}", {k: v.get("total", 0) for k, v in pair["summary"].items()}, progress=100)
     return pair
 
 @app.on_event("startup")
@@ -472,8 +481,8 @@ async def server_cache_refresh_all():
     SERVER_CACHE_STATUS["sync"] = config_store.sync()
     SERVER_CACHE_STATUS["startedAt"] = now_iso()
     SERVER_CACHE_STATUS["finishedAt"] = None
-    add_job("all", "server-sync", "running", "Starting server sync for all environments")
-    add_job("all", "server-sync", "running", "The UI remains available while metadata cache and differences are rebuilt")
+    add_job("all", "server-sync", "running", "Starting server sync for all environments", progress=0)
+    add_job("all", "server-sync", "running", "The UI remains available while metadata cache and differences are rebuilt", progress=2)
     for env in config_store.environments():
         await server_cache_refresh_environment(env, set_global_running=False)
     envs = list(config_store.environments())
@@ -484,7 +493,7 @@ async def server_cache_refresh_all():
             add_job("all", "differences", "error", f"Failed to build difference index: {e}")
     SERVER_CACHE_STATUS["running"] = False
     SERVER_CACHE_STATUS["finishedAt"] = now_iso()
-    add_job("all", "server-sync", "ok", "Server sync completed for all environments")
+    add_job("all", "server-sync", "ok", "Server sync completed for all environments", progress=100)
 
 
 async def server_cache_refresh_environment(env: str, set_global_running: bool = True):
@@ -520,8 +529,8 @@ async def server_cache_refresh_environment(env: str, set_global_running: bool = 
 
     try:
         client = ArApiClient()
-        add_job(env, "environment", "running", f"Starting synchronization for {env.upper()}")
-        add_job(env, "login", "running", "Connecting to AR System using server-login")
+        add_job(env, "environment", "running", f"Starting synchronization for {env.upper()}", progress=0)
+        add_job(env, "login", "running", "Connecting to AR System using server-login", progress=5)
         login_result = await client.server_login(env)
         session_id = login_result["sessionId"]
         SERVER_SESSIONS[env] = session_id
@@ -530,43 +539,52 @@ async def server_cache_refresh_environment(env: str, set_global_running: bool = 
             "user": login_result.get("user"),
             "serverVersion": login_result.get("serverVersion"),
         })
-        add_job(env, "login", "ok", f"Logged in as {login_result.get('user')}")
+        add_job(env, "login", "ok", f"Logged in as {login_result.get('user')}", progress=10)
 
         sync_cfg = config_store.sync()
         if sync_cfg.get("forms", True):
-            add_job(env, "forms", "running", "Reading form list and applying configured scope")
+            add_job(env, "forms", "running", "Reading form list and applying configured scope", progress=12)
             forms = await full_sync_forms(env, session_id=session_id, limit=AUTO_SERVER_SYNC_LIMIT, service_cache=True)
             env_status["forms"] = forms
             env_status["steps"].append({"objectType": "forms", "status": "ok", "finishedAt": now_iso(), "result": forms})
-            add_job(env, "forms", "ok", f"{forms.get('formsInScope', 0)} forms in scope", {"indexed": forms.get("indexed", 0), "synced": forms.get("synced", 0), "formsInScope": forms.get("formsInScope", 0), "mode": forms.get("mode")})
+            add_job(env, "forms", "ok", f"{forms.get('formsInScope', 0)} forms in scope", {"indexed": forms.get("indexed", 0), "synced": forms.get("synced", 0), "formsInScope": forms.get("formsInScope", 0), "mode": forms.get("mode")}, progress=25)
 
         workflow_enabled = any(sync_cfg.get(k, False) for k in (
             "active_links", "filters", "menus", "escalations", "images",
             "active_link_guides", "filter_guides", "web_services", "associations", "packing_lists", "applications", "containers",
         ))
         if workflow_enabled:
-            add_job(env, "workflow", "running", "Reading workflow object indexes related to scoped forms")
+            add_job(env, "workflow", "running", "Reading workflow object indexes related to scoped forms", progress=28)
             workflow = await full_sync_workflow(env, session_id=session_id, include_global=sync_cfg.get("include_global", True), limit_forms=AUTO_SERVER_SYNC_LIMIT, service_cache=True)
             env_status["workflow"] = workflow
             env_status["steps"].append({"objectType": "workflow", "status": workflow.get("status", "ok"), "finishedAt": now_iso(), "result": workflow})
-            add_job(env, "workflow", workflow.get("status", "ok"), "Workflow index completed", workflow.get("counts") or {})
+            add_job(env, "workflow", workflow.get("status", "ok"), "Workflow index completed", workflow.get("counts") or {}, progress=45)
 
         if sync_cfg.get("details", True):
-            add_job(env, "details", "running", "Loading detailed ARAPI definitions for deep compare; this can take a while", {"concurrency": sync_cfg.get("details_concurrency", 2)})
-            details = await deep_cache_object_details(env, session_id=session_id, service_cache=True)
+            add_job(env, "details", "running", "Loading detailed ARAPI definitions for deep compare; this can take a while", {"concurrency": sync_cfg.get("details_concurrency", 2)}, progress=48)
+            
+            def _detail_progress(p):
+                try:
+                    pct = 48 + int(float(p.get("percent", 0)) * 0.40)
+                    msg = p.get("message") or f"Caching {p.get('objectType','details')} metadata"
+                    add_job(env, "details", "running", msg, {k: v for k, v in p.items() if k != "message"}, progress=pct)
+                except Exception:
+                    pass
+            details = await deep_cache_object_details(env, session_id=session_id, service_cache=True, progress_cb=_detail_progress)
             env_status["details"] = details
             env_status["steps"].append({"objectType": "details", "status": details.get("status", "ok"), "finishedAt": now_iso(), "result": details})
             detail_counts = {k: v.get("loaded", 0) for k, v in (details.get("counts") or {}).items()}
-            add_job(env, "details", details.get("status", "ok"), "Deep metadata cache completed", detail_counts)
+            add_job(env, "details", details.get("status", "ok"), "Deep metadata cache completed", detail_counts, progress=88)
 
         env_status.update({"status": "ok", "finishedAt": now_iso()})
+        add_job(env, "environment", "ok", f"Synchronization completed for {env.upper()}", progress=100)
         envs = list(config_store.environments())
         if len(envs) >= 2:
             source = envs[0]
             target = envs[1]
             if env in (source, target):
                 try:
-                    add_job(env, "differences", "running", f"Calculating differences for {source.upper()} → {target.upper()}")
+                    add_job(env, "differences", "running", f"Calculating differences for {source.upper()} → {target.upper()}", progress=92)
                     build_difference_cache(source, target)
                 except Exception as diff_error:
                     add_job(env, "differences", "error", f"Failed to build difference index: {diff_error}")
@@ -596,7 +614,7 @@ async def health():
         arapi = await ArApiClient().health()
     except Exception as e:
         arapi = {"status": "error", "message": str(e)}
-    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.26", "logLevel": LOG_LEVEL, "arapi": arapi}
+    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.28", "logLevel": LOG_LEVEL, "arapi": arapi}
 
 
 @app.get("/api/environments")

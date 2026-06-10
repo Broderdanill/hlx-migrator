@@ -507,6 +507,7 @@ async def deep_cache_object_details(
     max_per_type: int | None = None,
     concurrency: int | None = None,
     refresh_existing: bool | None = None,
+    progress_cb=None,
 ) -> dict:
     """Load full ARAPI definitions for indexed objects.
 
@@ -524,6 +525,15 @@ async def deep_cache_object_details(
     concurrency = max(1, min(concurrency, 8))
     refresh_existing = bool(sync_cfg.get("details_refresh_existing", False) if refresh_existing is None else refresh_existing)
     continue_on_error = bool(sync_cfg.get("continue_on_error", True))
+
+    def emit_progress(object_type: str, message: str, completed: int = 0, total: int = 0):
+        if not progress_cb:
+            return
+        try:
+            percent = 0 if not total else int((completed / max(total, 1)) * 100)
+            progress_cb({"objectType": object_type, "message": message, "completed": completed, "total": total, "percent": percent})
+        except Exception:
+            pass
 
     client = ArApiClient()
     counts: dict[str, dict] = {}
@@ -566,6 +576,7 @@ async def deep_cache_object_details(
         requested = len(candidates)
         loaded = 0
         failed = 0
+        emit_progress(object_type, f"Preparing {object_type} details ({requested} to load, {skipped} already cached)", 0, max(requested, 1))
         for i in range(0, requested, concurrency * 4):
             chunk = candidates[i:i + concurrency * 4]
             results = await asyncio.gather(*(load_one(object_type, name) for name in chunk))
@@ -578,8 +589,10 @@ async def deep_cache_object_details(
                     errors.append(error)
                     if not continue_on_error:
                         raise RuntimeError(f"Detail cache failed for {object_type} {name}: {err}")
+            emit_progress(object_type, f"Loaded {loaded}/{requested} {object_type} details", loaded + failed, max(requested, 1))
             await asyncio.sleep(0)
 
+        emit_progress(object_type, f"Finished {object_type}: {loaded} loaded, {failed} failed, {skipped} skipped", requested, max(requested, 1))
         counts[object_type] = {"requested": requested, "loaded": loaded, "failed": failed, "skipped": skipped, "totalCached": len(rows)}
         steps.append({
             "step": f"details:{object_type}",
