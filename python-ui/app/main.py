@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import uuid
+import threading
 from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse
@@ -21,7 +22,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.1.24")
+app = FastAPI(title="HLX Migrator", version="1.1.25")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -37,6 +38,7 @@ SERVER_SESSIONS: dict[str, str] = {}
 ENV_LOCKS: dict[str, dict] = {}
 LOCK_GUARD = asyncio.Lock()
 DIFFERENCE_CACHE: dict[str, dict] = {}
+DIFF_CACHE_LOCK = threading.RLock()
 DIFF_OBJECT_TYPES = ["form", "active_link", "filter", "menu", "escalation", "active_link_guide", "filter_guide", "web_service", "association", "packing_list", "application", "image"]
 
 
@@ -328,7 +330,7 @@ def public_server_cache_status() -> dict:
         "environments": envs,
         "jobs": list((SERVER_CACHE_STATUS.get("jobs") or [])[:200]),
         "locks": _lock_public(),
-        "differences": DIFFERENCE_CACHE,
+        "differences": _difference_cache_public_summary(),
     }
 
 
@@ -336,6 +338,43 @@ def public_server_cache_status() -> dict:
 
 def _cache_key(source: str, target: str) -> str:
     return f"{source.lower()}->{target.lower()}"
+
+
+def _difference_cache_public_summary() -> dict:
+    """Return only small diff-cache metadata for status/polling endpoints.
+
+    Older builds returned the full DIFFERENCE_CACHE from /api/server-cache/status.
+    With tens of thousands of workflow objects that made every polling browser
+    download and JSON-parse a huge payload, which felt like the UI was hanging.
+    The full rows are now only served by /api/differences with paging.
+    """
+    with DIFF_CACHE_LOCK:
+        result: dict = {}
+        for pair_key, pair in DIFFERENCE_CACHE.items():
+            result[pair_key] = {
+                "source": pair.get("source"),
+                "target": pair.get("target"),
+                "builtAt": pair.get("builtAt"),
+                "version": pair.get("version"),
+                "summary": pair.get("summary") or {},
+            }
+        return result
+
+
+def _get_difference_pair(pair_key: str) -> dict | None:
+    with DIFF_CACHE_LOCK:
+        pair = DIFFERENCE_CACHE.get(pair_key)
+        if not pair:
+            return None
+        return dict(pair)
+
+
+def _set_difference_pair(pair_key: str, pair: dict) -> None:
+    with DIFF_CACHE_LOCK:
+        old_version = int((DIFFERENCE_CACHE.get(pair_key) or {}).get("version") or 0)
+        pair["version"] = old_version + 1
+        pair["builtAt"] = now_iso()
+        DIFFERENCE_CACHE[pair_key] = pair
 
 
 def _cached_meta_index(environment: str, object_type: str) -> dict[str, dict]:
@@ -413,6 +452,7 @@ def build_difference_cache(source: str, target: str) -> dict:
             pair["objectTypes"][object_type] = {"summary": {}, "objects": [], "total": 0, "error": str(e)}
             pair["summary"][object_type] = {"different": 0, "missing_in_source": 0, "missing_in_target": 0, "total": 0, "error": str(e)}
     DIFFERENCE_CACHE[pair_key] = pair
+    _set_difference_pair(pair_key, pair)
     add_job(source, "differences", "ok", f"Difference index built for {source.upper()} → {target.upper()}", {k: v.get("total", 0) for k, v in pair["summary"].items()})
     return pair
 
@@ -1028,11 +1068,13 @@ def differences_api(
         raise HTTPException(status_code=404, detail="Unknown source or target environment")
 
     pair_key = _cache_key(source, target)
-    pair = DIFFERENCE_CACHE.get(pair_key)
+    pair = _get_difference_pair(pair_key)
     if not pair or object_type not in (pair.get("objectTypes") or {}):
         pair = build_difference_cache(source, target)
 
-    data = pair.get("objectTypes", {}).get(object_type, {"summary": {}, "objects": [], "total": 0})
+    data = (pair.get("objectTypes") or {}).get(object_type, {"summary": {}, "objects": [], "total": 0})
+    # Copy the list before filtering/sorting. Multiple browsers can read the same
+    # shared diff cache while a migration or sync replaces it atomically.
     objects = list(data.get("objects") or [])
     if include_equal:
         diff_cfg = config_store.diff()

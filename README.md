@@ -606,3 +606,13 @@ UI layout polish:
 - Restored/kept the normal table font size and made rows compact by reducing padding, button height and cell spacing instead of shrinking text.
 - Documented the intended multi-user model: metadata and difference indexes are shared by environment pair, while browser selection/filter/login state remains user-local.
 - Read-only Browse/Differences/Compare operations are designed to run in parallel across users; write operations still lock the affected target environment.
+
+
+## 1.1.25
+
+- Added multi-user cache behavior for shared server-side Browse/Differences data.
+- Browser sessions, filters, paging and selections remain per user/browser.
+- Diff cache is shared per Source → Target pair and replaced atomically so read-only users can continue browsing while another user migrates or refreshes.
+- `/api/server-cache/status` now returns compact diff summaries instead of full diff row payloads, reducing polling overhead for large environments.
+- SQLite cache uses WAL mode and a busy timeout to allow concurrent readers while background sync writes metadata.
+- Result rows remain compact through padding/height changes without shrinking the table font.
