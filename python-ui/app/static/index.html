@@ -154,7 +154,7 @@
     .top-env-pair select{background:#082138!important;border:1px solid var(--line2)!important;border-radius:7px!important;color:var(--text)!important}
     .top-env-pair select:hover{background:#092943!important;border-color:#00b9f6!important}
 
-</style>
+.sync-card-progress{margin:8px 0 10px}.sync-card-progress.compact{margin:6px 0}.sync-card-progress .sync-progress-label{display:flex;justify-content:space-between;gap:12px;align-items:center}.sync-card-progress .sync-progress-label strong{color:#f7f7f7;font-weight:700}</style>
 </head>
 <body>
 <header>
@@ -425,6 +425,69 @@ async function refreshAll(initial=false){
   }catch(err){setStatus(err.message)}
   finally{state.refreshingAll=false;}
 }
+
+function currentRunningJobs(){
+  return (state.serverCache.jobs||[]).filter(j=>j.status==='running');
+}
+function latestRunningJobForEnv(env){
+  const e=String(env||'').toLowerCase();
+  const envStatus=state.serverCache.environments?.[e]?.status;
+  // Do not show stale running progress when backend already reports the env OK.
+  if(envStatus==='ok') return null;
+  return currentRunningJobs().find(j=>String(j.environment||'').toLowerCase()===e)
+      || currentRunningJobs().find(j=>String(j.environment||'').toLowerCase()==='all')
+      || null;
+}
+function syncCompleteJobForEnv(env){
+  const e=String(env||'').toLowerCase();
+  const s=state.serverCache.environments?.[e]||{};
+  if(s.status==='ok' && s.finishedAt){
+    return {environment:e,objectType:'sync',status:'ok',message:'Sync complete',progress:100,time:s.finishedAt};
+  }
+  return null;
+}
+function progressValue(job){
+  const p=Number(job?.progress);
+  if(Number.isFinite(p)) return Math.max(0, Math.min(100, p));
+  return null;
+}
+function progressHtml(job, compact=false){
+  if(!job) return '';
+  const p=progressValue(job);
+  const label=p===null ? 'Working…' : `${Math.round(p)}%`;
+  const barClass=p===null ? 'sync-progress-bar indeterminate' : 'sync-progress-bar';
+  const width=p===null ? '' : ` style="width:${p}%"`;
+  const msg=html(`${job.objectType||'sync'} — ${job.message||job.status||''}`);
+  return `<div class="sync-card-progress ${compact?'compact':''}"><div class="sync-progress-wrap"><div class="${barClass}"${width}></div></div><div class="sync-progress-label small"><span>${msg}</span><strong>${label}</strong></div></div>`;
+}
+function updateSyncProgress(active){
+  const wrap=document.getElementById('syncProgressWrap');
+  const bar=document.getElementById('syncProgressBar');
+  const label=document.getElementById('syncProgressLabel');
+  if(!wrap||!bar||!label) return;
+  const job=currentRunningJobs()[0] || null;
+  if(!active || !job){
+    wrap.classList.add('hidden');
+    label.classList.add('hidden');
+    bar.className='sync-progress-bar';
+    bar.style.width='0%';
+    label.textContent='';
+    return;
+  }
+  const p=progressValue(job);
+  wrap.classList.remove('hidden');
+  label.classList.remove('hidden');
+  if(p===null){
+    bar.className='sync-progress-bar indeterminate';
+    bar.style.width='';
+    label.textContent=`${job.environment?.toUpperCase?.()||'SYNC'}: ${job.objectType||'sync'} — working…`;
+  }else{
+    bar.className='sync-progress-bar';
+    bar.style.width=`${p}%`;
+    label.textContent=`${Math.round(p)}% — ${job.environment?.toUpperCase?.()||'SYNC'}: ${job.objectType||'sync'} — ${job.message||job.status||''}`;
+  }
+}
+
 function renderSelects(){for(const el of [sourceEnv,targetEnv]){const sel=el.id==='sourceEnv'?state.source:state.target;el.innerHTML=state.envs.map(e=>`<option ${e===sel?'selected':''}>${e.toUpperCase()}</option>`).join('')}}
 function savePair(){state.source=sourceEnv.value.toLowerCase();state.target=targetEnv.value.toLowerCase();sessionStorage.setItem('hlx.sourceEnv',state.source);sessionStorage.setItem('hlx.targetEnv',state.target);renderHeader()}
 function allCustomizationTypes(){return ['Base','Custom','Overlay','Unknown']}
@@ -501,7 +564,7 @@ function renderTree(){
     return `<button id="nav_${t}" class="${state.type===t?'active':''}" onclick="selectType('${t}')"><span class="tree-label"><span class="tree-icon" aria-hidden="true">${objectTypeIcon(t)}</span><span class="tree-text">${TYPE_LABEL[t]}</span></span><span class="badge" title="${c}">${compactCount(c)}</span></button>`
   }).join('')
 }
-function renderCards(){envCards.innerHTML=state.envs.map(env=>{const s=state.serverCache.environments?.[env]||{};const lock=state.serverCache.locks?.[env];const counts=state.cache[env]||{};const rows=Object.entries(counts).sort().map(([t,v])=>`<div class="metric"><span>${TYPE_LABEL[t]||t}</span><span title="${v.count}">${compactCount(v.count)} <span class="muted">${fmtDate(v.lastSeen)}</span></span></div>`).join('')||'<div class="muted">No cache yet</div>';const lockHtml=lock?`<div class="pill warn" style="margin:7px 0">Locked: ${html(lock.operation)} by ${html(lock.owner)} since ${fmtDate(lock.startedAt)}</div>`:'';return `<div class="env-card"><div class="toolbar"><h3>${env.toUpperCase()} <span class="${s.status==='ok'?'ok':s.status==='error'?'bad':'warn'}">${s.status||'pending'}</span></h3><button onclick="serverSyncEnv('${env}')" ${lock?'disabled title="Environment is locked"':''}>Server Sync</button></div>${lockHtml}<div class="small muted">Server: ${s.serverVersion||'-'}<br>User: ${s.user||'-'}<br>Last sync: ${fmtDate(s.finishedAt)}<br>Mode: ${s.lastSyncMode||'-'}</div><div class="small" style="margin:7px 0">Scope: ${(s.scope?.include_form_prefixes||state.scope.include_form_prefixes||[]).join(', ')||'-'}</div>${rows}</div>`}).join('')}
+function renderCards(){envCards.innerHTML=state.envs.map(env=>{const s=state.serverCache.environments?.[env]||{};const lock=state.serverCache.locks?.[env];const runningJob=latestRunningJobForEnv(env);const counts=state.cache[env]||{};const rows=Object.entries(counts).sort().map(([t,v])=>`<div class="metric"><span>${TYPE_LABEL[t]||t}</span><span title="${v.count}">${compactCount(v.count)} <span class="muted">${fmtDate(v.lastSeen)}</span></span></div>`).join('')||'<div class="muted">No cache yet</div>';const lockHtml=lock?`<div class="pill warn" style="margin:7px 0">Locked: ${html(lock.operation)} by ${html(lock.owner)} since ${fmtDate(lock.startedAt)}</div>`:'';const progress=progressHtml(runningJob||syncCompleteJobForEnv(env),true);return `<div class="env-card"><div class="toolbar"><h3>${env.toUpperCase()} <span class="${s.status==='ok'?'ok':s.status==='error'?'bad':'warn'}">${s.status||'pending'}</span></h3><button onclick="serverSyncEnv('${env}')" ${lock?'disabled title="Environment is locked"':''}>Server Sync</button></div>${lockHtml}${progress}<div class="small muted">Server: ${s.serverVersion||'-'}<br>User: ${s.user||'-'}<br>Last sync: ${fmtDate(s.finishedAt)}<br>Mode: ${s.lastSyncMode||'-'}</div><div class="small" style="margin:7px 0">Scope: ${(s.scope?.include_form_prefixes||state.scope.include_form_prefixes||[]).join(', ')||'-'}</div>${rows}</div>`}).join('')}
 function renderJobs(){
   const allJobs=state.serverCache.jobs||[];
   const jobsData=allJobs.filter(j=>!state.logClearedAt || Date.parse(j.time||0)>state.logClearedAt);

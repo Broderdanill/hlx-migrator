@@ -22,7 +22,11 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("hlx-migrator-ui")
 
-app = FastAPI(title="HLX Migrator", version="1.1.27")
+AUTO_SYNC_START_DELAY_SECONDS = float(os.getenv("HLX_AUTO_SYNC_START_DELAY_SECONDS", "5"))
+AUTO_SYNC_LOGIN_RETRIES = int(os.getenv("HLX_AUTO_SYNC_LOGIN_RETRIES", "3"))
+
+
+app = FastAPI(title="HLX Migrator", version="1.1.30")
 
 SERVER_CACHE_STATUS = {
     "enabled": AUTO_SERVER_SYNC,
@@ -286,13 +290,21 @@ def add_job(env: str, object_type: str, status: str, message: str = "", counts: 
         "progress": progress,
     }
     jobs = SERVER_CACHE_STATUS.setdefault("jobs", [])
-    # Keep progress updates readable: repeated running events for the same
-    # environment/object phase update the latest row instead of flooding the log.
-    if status == "running" and jobs:
-        latest = jobs[0]
-        if latest.get("status") == "running" and latest.get("environment") == env and latest.get("objectType") == object_type:
-            latest.update(job)
-            return latest
+    # Keep progress readable and prevent stale running rows. Repeated running
+    # updates for the same environment/object update the latest row. A terminal
+    # update for the same environment/object also updates the matching running
+    # row, so the UI cannot keep showing an old 92% job after sync completed.
+    if jobs:
+        if status == "running":
+            latest = jobs[0]
+            if latest.get("status") == "running" and latest.get("environment") == env and latest.get("objectType") == object_type:
+                latest.update(job)
+                return latest
+        elif status in {"ok", "error", "locked"}:
+            for existing in jobs:
+                if existing.get("status") == "running" and existing.get("environment") == env and existing.get("objectType") == object_type:
+                    existing.update(job)
+                    return existing
     jobs.insert(0, job)
     SERVER_CACHE_STATUS["jobs"] = jobs[:300]
     return job
@@ -472,19 +484,30 @@ async def startup():
     SERVER_CACHE_STATUS["scope"] = config_store.scope()
     SERVER_CACHE_STATUS["sync"] = config_store.sync()
     if AUTO_SERVER_SYNC and config_store.sync().get("auto_start", True):
-        asyncio.create_task(server_cache_refresh_all())
+        asyncio.create_task(delayed_startup_sync())
 
 
-async def server_cache_refresh_all():
+async def delayed_startup_sync():
+    # AR System and mounted config/secrets can need a few seconds after pod
+    # creation before startup server-login works reliably. A short delay plus
+    # retry makes auto-start behave like a manual sync started shortly after boot.
+    delay = max(0.0, AUTO_SYNC_START_DELAY_SECONDS)
+    if delay:
+        add_job("all", "startup", "running", f"Waiting {delay:g}s before initial sync so services are ready", progress=None)
+        await asyncio.sleep(delay)
+    await server_cache_refresh_all(startup=True)
+
+
+async def server_cache_refresh_all(startup: bool = False):
     SERVER_CACHE_STATUS["running"] = True
     SERVER_CACHE_STATUS["scope"] = config_store.scope()
     SERVER_CACHE_STATUS["sync"] = config_store.sync()
     SERVER_CACHE_STATUS["startedAt"] = now_iso()
     SERVER_CACHE_STATUS["finishedAt"] = None
-    add_job("all", "server-sync", "running", "Starting server sync for all environments", progress=0)
+    add_job("all", "server-sync", "running", "Starting initial server sync for all environments" if startup else "Starting server sync for all environments", progress=0)
     add_job("all", "server-sync", "running", "The UI remains available while metadata cache and differences are rebuilt", progress=2)
     for env in config_store.environments():
-        await server_cache_refresh_environment(env, set_global_running=False)
+        await server_cache_refresh_environment(env, set_global_running=False, startup=startup)
     envs = list(config_store.environments())
     if len(envs) >= 2:
         try:
@@ -493,10 +516,10 @@ async def server_cache_refresh_all():
             add_job("all", "differences", "error", f"Failed to build difference index: {e}")
     SERVER_CACHE_STATUS["running"] = False
     SERVER_CACHE_STATUS["finishedAt"] = now_iso()
-    add_job("all", "server-sync", "ok", "Server sync completed for all environments", progress=100)
+    add_job("all", "server-sync", "ok", "Initial server sync completed for all environments" if startup else "Server sync completed for all environments", progress=100)
 
 
-async def server_cache_refresh_environment(env: str, set_global_running: bool = True):
+async def server_cache_refresh_environment(env: str, set_global_running: bool = True, startup: bool = False):
     lock_token = None
     try:
         lock_token = await acquire_env_lock(env, "server-sync", "serverlogin" if not set_global_running else "manual")
@@ -530,8 +553,24 @@ async def server_cache_refresh_environment(env: str, set_global_running: bool = 
     try:
         client = ArApiClient()
         add_job(env, "environment", "running", f"Starting synchronization for {env.upper()}", progress=0)
-        add_job(env, "login", "running", "Connecting to AR System using server-login", progress=5)
-        login_result = await client.server_login(env)
+        login_result = None
+        last_login_error = None
+        retries = max(1, AUTO_SYNC_LOGIN_RETRIES if startup else 1)
+        for attempt in range(1, retries + 1):
+            retry_note = f" (attempt {attempt}/{retries})" if retries > 1 else ""
+            add_job(env, "login", "running", f"Connecting to AR System using server-login{retry_note}", progress=5)
+            try:
+                login_result = await client.server_login(env)
+                break
+            except Exception as login_error:
+                last_login_error = login_error
+                if attempt >= retries:
+                    raise
+                wait_seconds = min(10, 2 * attempt)
+                add_job(env, "login", "running", f"Server-login failed; retrying in {wait_seconds}s: {login_error}", progress=None)
+                await asyncio.sleep(wait_seconds)
+        if login_result is None:
+            raise last_login_error or RuntimeError("Server-login failed")
         session_id = login_result["sessionId"]
         SERVER_SESSIONS[env] = session_id
         env_status.update({
@@ -586,6 +625,7 @@ async def server_cache_refresh_environment(env: str, set_global_running: bool = 
                 try:
                     add_job(env, "differences", "running", f"Calculating differences for {source.upper()} → {target.upper()}", progress=92)
                     build_difference_cache(source, target)
+                    add_job(env, "differences", "ok", f"Differences calculated for {source.upper()} → {target.upper()}", progress=100)
                 except Exception as diff_error:
                     add_job(env, "differences", "error", f"Failed to build difference index: {diff_error}")
     except Exception as e:
@@ -614,7 +654,7 @@ async def health():
         arapi = await ArApiClient().health()
     except Exception as e:
         arapi = {"status": "error", "message": str(e)}
-    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.28", "logLevel": LOG_LEVEL, "arapi": arapi}
+    return {"status": "ok", "app": "hlx-migrator-ui", "version": "1.1.29", "logLevel": LOG_LEVEL, "arapi": arapi}
 
 
 @app.get("/api/environments")

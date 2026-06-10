@@ -631,8 +631,21 @@ UI layout polish:
 - Improved hover and focus styling for the top-bar environment dropdowns.
 
 
-## 1.1.28
+## 1.1.29
 
 - Added sync progress UI with percentage/phase indicator based on server-side sync jobs.
 - Added a Visual Summary diff tab that gives a more readable alternative to raw JSON while keeping the existing JSON views.
 - Deep metadata sync now emits throttled progress events per object type so the UI feels alive during long initial syncs.
+
+
+### 1.1.29
+
+- Sync Status now shows a visible progress bar while synchronization is running.
+- The global sync panel and each running environment card show either percentage progress or an animated working bar when exact progress is not yet known.
+
+
+## 1.1.30
+
+- Sync progress no longer remains at the last running percentage when an environment is complete; completed cards show 100% / Sync complete.
+- Auto-start sync waits briefly after pod startup and retries server-login to avoid transient boot-time failures that succeed on manual retry.
+- Configurable with `HLX_AUTO_SYNC_START_DELAY_SECONDS` and `HLX_AUTO_SYNC_LOGIN_RETRIES`.
