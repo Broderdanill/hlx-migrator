@@ -136,18 +136,33 @@
     .top-actions{gap:7px}.top-env-pair{display:inline-grid;grid-template-columns:auto minmax(86px,120px) auto minmax(86px,120px);gap:5px;align-items:center;border:1px solid rgba(0,185,246,.28);border-radius:999px;background:#06192b;padding:3px 7px}.top-env-pair .env-caption{color:var(--muted);font-size:11px}.top-env-pair select{min-height:24px;height:24px;border:0;background:transparent;padding:1px 16px 1px 4px;color:#f7f7f7}.top-env-pair .arrow{font-size:14px;line-height:1}.side-head{padding:8px 12px}.side-head .object-heading{font-weight:700;color:#f7f7f7}.tree button{min-height:25px;padding:3px 9px}.tree button.active{padding-left:6px}.tree-icon{width:15px;height:15px;border-radius:4px}.tree-icon svg{width:11px;height:11px}.badge{min-width:19px;padding:0 6px}.main{padding:10px 12px;gap:8px}.panel-pad{padding:8px}.filter-main-row{margin-top:7px}.filter-sub-row{margin-top:5px}.table-section-toolbar{padding:6px 8px}.result-table{font-size:12.5px}.result-table th,.result-table td{height:17px!important;line-height:1.05!important;padding:0 3px!important}.result-table th{height:20px!important;font-size:12.5px}.result-table tbody tr{height:17px!important;contain-intrinsic-size:17px!important}.result-table input[type="checkbox"]{width:12px!important;height:12px!important}.result-table button,.table-wrap button{min-height:17px!important;height:17px!important;padding:0 4px!important;border-radius:5px;font-size:12.5px}.copy-btn{min-height:17px!important;padding:0 4px!important}.status-badge{padding:0 5px!important}.name-cell,.name-link{font-weight:520}.activity-panel .panel-pad{padding:7px 9px}.login-env .row input{min-height:26px}.session-hint{max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     @media(max-width:1050px){.top-env-pair{grid-template-columns:minmax(74px,1fr) auto minmax(74px,1fr)}.top-env-pair .env-caption{display:none}.top-env-pair select{width:82px}.session-hint{display:none}}
 
+
+    /* 1.1.26 visual polish: clearer header context, readable object tree, larger table text with tighter rows. */
+    header{display:grid;grid-template-columns:minmax(320px,1fr) auto;gap:12px;align-items:center}
+    .header-left{display:flex;align-items:center;gap:16px;min-width:0}
+    .context-chip{display:inline-flex;align-items:center;min-height:26px;max-width:min(460px,42vw);padding:3px 11px;border:1px solid rgba(0,185,246,.28);border-radius:999px;background:#06192b;color:#b8c6d8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .top-actions{justify-content:flex-end;min-width:0}
+    .session-hint{max-width:340px}
+    .tree button{font-size:13px;min-height:28px;padding-top:4px;padding-bottom:4px}
+    .tree-text{font-weight:560}.object-heading{font-size:13px}.tree-icon{width:16px;height:16px}.tree-icon svg{width:11.5px;height:11.5px}.badge{font-size:12px;min-width:20px}
+    .result-table{font-size:13px!important}.result-table th{height:21px!important;font-size:12.5px!important;padding:0 5px!important}.result-table td{height:18px!important;line-height:1!important;padding:0 4px!important}.result-table tbody tr{height:18px!important;contain-intrinsic-size:18px!important}.result-table input[type="checkbox"]{width:12px!important;height:12px!important;margin:0!important}.result-table button,.table-wrap button{min-height:17px!important;height:17px!important;padding:0 5px!important;line-height:1!important}.copy-btn{min-height:17px!important;height:17px!important;padding:0 5px!important}.name-cell,.name-link{font-weight:560}
+    @media(max-width:1200px){header{grid-template-columns:1fr}.header-left{justify-content:space-between}.top-actions{justify-content:flex-start}.context-chip{max-width:48vw}}
+    @media(max-width:780px){.context-chip{display:none}.session-hint{display:none}}
+
 </style>
 </head>
 <body>
 <header>
-  <div class="brand"><img class="app-icon" src="/static/hlx-migrator-icon.png" alt="HLX Migrator icon"><h1>HLX Migrator</h1></div>
+  <div class="header-left">
+    <div class="brand"><img class="app-icon" src="/static/hlx-migrator-icon.png" alt="HLX Migrator icon"><h1>HLX Migrator</h1></div>
+    <span id="modeHeader" class="context-chip">Browse source</span>
+  </div>
   <div class="top-actions">
     <span class="mode-switch"><button id="browseModeBtn" onclick="setViewMode('browse')" class="active">Browse</button><button id="diffModeBtn" onclick="setViewMode('differences')">Differences</button></span>
     <span class="top-env-pair" title="Source and destination environments">
       <span class="env-caption">Source</span><select id="sourceEnv" onchange="state.selected=[];state.offset=0;savePair();loadSourceObjects()"></select>
       <span class="arrow">→</span><select id="targetEnv" onchange="state.selected=[];savePair();clearCompare()"></select>
     </span>
-    <span id="modeHeader" class="small muted">Browse source</span>
     <span id="sessionHeader" class="small muted session-hint">No browser sessions</span>
     <button class="ghost" onclick="toggleLogin()">Login</button>
     <button id="syncStatusBtn" class="ghost" onclick="toggleEnvMenu()">Sync Status</button>

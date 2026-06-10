@@ -616,3 +616,10 @@ UI layout polish:
 - `/api/server-cache/status` now returns compact diff summaries instead of full diff row payloads, reducing polling overhead for large environments.
 - SQLite cache uses WAL mode and a busy timeout to allow concurrent readers while background sync writes metadata.
 - Result rows remain compact through padding/height changes without shrinking the table font.
+
+
+### 1.1.26
+
+- Visual polish for the top bar: the current context is now shown next to the app title instead of being grouped with action controls.
+- Object type labels are slightly larger and easier to read.
+- Result table text is slightly larger while row height remains compact by reducing padding/margins rather than shrinking the font.
