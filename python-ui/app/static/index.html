@@ -21,6 +21,7 @@
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:30;display:flex;align-items:center;justify-content:center;padding:24px}.modal{width:min(1500px,96vw);height:min(900px,92vh);background:#0a1220;border:1px solid var(--line2);border-radius:14px;box-shadow:0 25px 80px rgba(0,0,0,.75);display:flex;flex-direction:column;overflow:hidden}.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);background:#0e3b65}.modal-body{padding:12px;overflow:auto;flex:1}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.tabs button.active{background:#315a91;border-color:#80b4ff}.big-json{display:grid;grid-template-columns:1fr;gap:10px}.json-side-by-side{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-height:0}.json-pane{min-width:0}.json-pane strong{display:flex;align-items:center;justify-content:space-between;margin:0 0 6px 0;color:#cfe2ff}.json-pane pre,.big-json pre{white-space:pre-wrap;word-break:break-word;max-height:70vh;overflow:auto;background:#050b14;border:1px solid #1b2c47;border-radius:10px;padding:12px;font-size:12px}.json-pane pre{height:68vh}.json-empty{color:var(--muted);font-style:italic}@media(max-width:1100px){.json-side-by-side{grid-template-columns:1fr}.json-pane pre{height:auto;max-height:45vh}}.full-diff-table{font-size:12px}.full-diff-table th,.full-diff-table td{vertical-align:top;padding:6px 8px}.full-diff-table code{display:block;white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto;color:#d9e8ff}
     @media(max-width:1100px){.json-compare{grid-template-columns:1fr}}.log{max-height:240px;overflow:auto;background:#07101d;border-top:1px solid var(--line);padding:8px}.log-row{display:grid;grid-template-columns:145px 70px 80px 1fr;gap:8px;padding:2px 0;border-bottom:1px solid #15243a}.log-row:hover{background:#0e1a2d}.summary{display:flex;gap:7px;flex-wrap:wrap}.filter-active{outline:2px solid var(--accent)}.mode-switch{display:inline-flex;gap:4px;border:1px solid var(--line2);border-radius:999px;padding:2px;background:#07101d}.mode-switch button{border-radius:999px;border:0;background:transparent;padding:4px 10px}.mode-switch button.active{background:#165a9b;color:#fff}.selected-summary{color:#c8d6eb;max-width:700px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.select-all-cell{text-align:center;width:38px}.copy-cell{text-align:center;width:42px}th.sortable{cursor:pointer;user-select:none}th.sortable:hover{color:white;background:#13223a}.sort-ind{color:var(--accent);font-size:11px;margin-left:4px}.copy-btn{padding:2px 6px;border-radius:6px;font-size:12px}.check{transform:scale(1.05)}
     .side-diff{height:70vh;overflow:auto;border:1px solid #1b2c47;border-radius:10px;background:#050b14}.side-diff-head,.side-diff-row{display:grid;grid-template-columns:1fr 1fr}.side-diff-head{position:sticky;top:0;z-index:2;background:#082138;border-bottom:1px solid #263b5d;color:#cfe2ff;font-weight:700}.side-diff-head div{padding:8px 10px}.side-diff-cell{min-width:0;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.35;padding:2px 10px;border-bottom:1px solid #102037}.side-diff-cell+ .side-diff-cell{border-left:1px solid #1b2c47}.side-diff-row.changed .side-diff-cell{background:rgba(255,159,67,.12)}.side-diff-row.only-left .side-diff-cell:first-child{background:rgba(255,107,107,.16)}.side-diff-row.only-right .side-diff-cell:last-child{background:rgba(88,214,141,.16)}.side-diff-row.same .side-diff-cell{color:#9fb0ca}.side-diff-line-no{display:inline-block;color:#5f759a;min-width:42px;user-select:none}.side-diff-empty{color:#536987;font-style:italic}.visual-diff{display:grid;gap:8px}.visual-diff-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}.visual-chip{border:1px solid rgba(0,185,246,.28);border-radius:999px;background:#06192b;padding:4px 9px}.visual-diff-row{display:grid;grid-template-columns:120px minmax(220px,1fr) minmax(220px,1fr);gap:8px;border:1px solid #1b2c47;border-radius:9px;background:#061827;padding:7px 8px}.visual-diff-kind{font-weight:700}.visual-diff-path{grid-column:2 / 4;color:#dceafa;font-family:ui-monospace,Consolas,monospace;white-space:normal;word-break:break-word}.visual-diff-value{background:#050b14;border:1px solid #102037;border-radius:7px;padding:6px;min-width:0;white-space:pre-wrap;word-break:break-word;max-height:140px;overflow:auto}.visual-diff-label{color:var(--muted);font-size:11px;margin-bottom:3px}.visual-diff-empty{color:var(--muted);font-style:italic}@media(max-width:1000px){.visual-diff-row{grid-template-columns:1fr}.visual-diff-path{grid-column:auto}}
+    .semantic-summary{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 10px 0}.semantic-badge{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(0,185,246,.28);background:#071d31;border-radius:999px;padding:4px 9px;color:#e4f2ff}.semantic-badge strong{color:#fff}.semantic-badge.changed{border-color:rgba(255,204,51,.55);background:rgba(255,204,51,.10)}.semantic-badge.added{border-color:rgba(73,196,73,.42);background:rgba(73,196,73,.10)}.semantic-badge.removed{border-color:rgba(171,13,2,.42);background:rgba(171,13,2,.10)}.semantic-group{border:1px solid #1b2c47;border-radius:10px;background:#061827;margin-bottom:9px;overflow:hidden}.semantic-group-head{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;background:#092943;border-bottom:1px solid #1b2c47;font-weight:700}.semantic-group-body{display:grid;gap:1px}.semantic-row{display:grid;grid-template-columns:110px minmax(240px,1.1fr) minmax(220px,1fr) minmax(220px,1fr);gap:8px;padding:5px 8px;background:#07101d;border-bottom:1px solid #102037;align-items:start}.semantic-row:last-child{border-bottom:0}.semantic-kind{font-weight:700;color:#ffdf80}.semantic-label{color:#e8f3ff}.semantic-path{display:block;color:#7fcfff;font:11px ui-monospace,Consolas,monospace;margin-top:2px;white-space:normal;word-break:break-word}.semantic-value{background:#050b14;border:1px solid #102037;border-radius:7px;padding:4px 6px;max-height:110px;overflow:auto;white-space:pre-wrap;word-break:break-word}.semantic-empty{color:var(--muted);font-style:italic}.rel-layout{display:grid;gap:10px}.rel-graph{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;border:1px solid #1b2c47;border-radius:12px;background:#061827;padding:12px}.rel-node{border:1px solid rgba(0,185,246,.42);background:#082138;border-radius:12px;padding:10px 12px;min-width:210px;text-align:center}.rel-node-title{font-weight:800}.rel-node-sub{color:var(--muted);font-size:11px;margin-top:2px}.rel-chip-cloud{display:flex;gap:6px;flex-wrap:wrap;align-content:center}.rel-chip{border:1px solid rgba(0,185,246,.25);background:#071d31;border-radius:999px;padding:4px 8px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rel-chip .rel-type{color:#ffdf80;font-weight:700;margin-right:4px}.rel-section{border:1px solid #1b2c47;border-radius:10px;background:#061827;overflow:hidden}.rel-section h3{margin:0;padding:8px 10px;background:#092943;border-bottom:1px solid #1b2c47;font-size:13px}.rel-table{width:100%;border-collapse:collapse}.rel-table th,.rel-table td{padding:5px 8px;height:auto;white-space:normal;vertical-align:top}.rel-table th{position:static;background:#082138}.rel-table td{border-bottom:1px solid #102037}@media(max-width:1050px){.semantic-row{grid-template-columns:1fr}.rel-graph{grid-template-columns:1fr}.rel-chip-cloud{justify-content:center}}
 
     #scopeBox{display:none}:root{--activity-collapsed:58px;--activity-expanded:320px}.main{height:calc(100vh - 58px);overflow:hidden;padding-bottom:calc(var(--activity-collapsed) + 18px)}body.activity-expanded .main{padding-bottom:calc(var(--activity-expanded) + 18px)}.activity-panel{position:fixed;left:299px;right:14px;bottom:10px;z-index:20;margin:0;box-shadow:0 18px 50px rgba(0,0,0,.65)}.activity-panel .activity-head{padding:8px 12px}.activity-panel.collapsed .log{display:none}.activity-panel.expanded .log{display:block;max-height:250px;transition:max-height .18s ease}.activity-panel.collapsed .activity-head{padding:7px 12px}@media(max-width:900px){.activity-panel{left:14px}.main{padding-bottom:calc(var(--activity-collapsed) + 24px)}body.activity-expanded .main{padding-bottom:calc(var(--activity-expanded) + 24px)}}
 
@@ -254,10 +255,12 @@
     <div class="modal-body">
       <div class="tabs">
         <button id="fd_btn_visual" class="active" onclick="fullDiffTab('visual')">Visual summary</button>
+        <button id="fd_btn_relationships" onclick="fullDiffTab('relationships')">Relationships</button>
         <button id="fd_btn_diff" onclick="fullDiffTab('diff')">Differences</button>
         <button id="fd_btn_side" onclick="fullDiffTab('side')">Side-by-side JSON</button>
       </div>
       <div id="fd_visual" data-full-tab="visual"></div>
+      <div id="fd_relationships" data-full-tab="relationships" class="hidden"></div>
       <div id="fd_diff" data-full-tab="diff" class="hidden"></div>
       <div id="fd_side" data-full-tab="side" class="hidden"></div>
     </div>
@@ -899,12 +902,10 @@ function renderRows(){
     const statusText=compared?displayStatus(o.status):'source';
     const sourceMark=(state.mode==='differences' && o.status==='missing_in_source')?'-':'✓';
     const targetMark=(state.mode==='differences' && o.status==='missing_in_target')?'-':(compared?(o.status==='missing_in_target'?'-':'✓'):'-');
-    const sourceMissing=state.mode==='differences' && o.status==='missing_in_source';
-    const targetMissing=state.mode==='differences' && o.status==='missing_in_target';
-    const sourceTs=sourceMissing?'':(o.sourceTimestamp||(!targetMissing?o.timestamp:'')||'');
-    const sourceBy=sourceMissing?'':(o.sourceLastChangedBy||(!targetMissing?o.lastChangedBy:'')||'');
-    const targetTs=targetMissing?'':(o.targetTimestamp||'');
-    const targetBy=targetMissing?'':(o.targetLastChangedBy||'');
+    const sourceTs=o.sourceTimestamp||o.timestamp||'';
+    const sourceBy=o.sourceLastChangedBy||o.lastChangedBy||'';
+    const targetTs=o.targetTimestamp||'';
+    const targetBy=o.targetLastChangedBy||'';
     const custom=o.customizationType||o.sourceCustomizationType||o.targetCustomizationType||'';
     return `<tr class="${checked?'selected':''}"><td class="select-all-cell"><input class="check" type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation();toggleSelected('${esc(o.name)}')"></td><td class="name-cell"><span class="name-link" onclick="toggleSelected('${esc(o.name)}')">${html(o.name)}</span></td><td class="copy-cell"><button class="ghost copy-btn" title="Copy name" onclick="event.stopPropagation();copyName('${esc(o.name)}')">⧉</button></td><td class="small muted mono">${html(sourceTs)}</td><td class="small muted">${html(sourceBy)}</td><td class="small muted mono">${html(targetTs)}</td><td class="small muted">${html(targetBy)}</td><td class="small muted">${html(custom)}</td><td class="s-${o.status}">${statusText}</td><td>${sourceMark}</td><td>${targetMark}</td><td><button class="ghost" onclick="showDetailByIndex(${idx})">Details</button></td></tr>`
   }).join('')||'<tr><td colspan="12" class="muted">No objects match the filter, or the cache is not ready yet.</td></tr>';
@@ -972,22 +973,131 @@ function fullDiffTab(tab){
   document.getElementById('fd_btn_'+tab)?.classList.add('active');
 }
 
+function deepPathTokens(path){
+  const s=String(path||'');
+  const out=[];
+  const re=/\['([^']+)'\]|\[(\d+)\]|root/g;
+  let m;
+  while((m=re.exec(s))){
+    if(m[0]==='root') continue;
+    out.push(m[1]!==undefined?m[1]:m[2]);
+  }
+  return out;
+}
+const FRIENDLY_TOKEN={
+  fields:'Fields',field:'Field',views:'Views',vuis:'Views',view:'View',permissions:'Permissions',permission:'Permission',actions:'Actions',ifActions:'If Actions',elseActions:'Else Actions',qualification:'Qualification',runIf:'Run If',executeOn:'Execute On',executeOrder:'Execute Order',enabled:'Enabled',name:'Name',label:'Label',displayLabel:'Display Label',databaseName:'Database Name',formName:'Form',schema:'Form',targetForm:'Target Form',pushFields:'Push Fields',setFields:'Set Fields',menu:'Menu',menus:'Menus',guide:'Guide',guides:'Guides',container:'Container',containers:'Containers',webService:'Web Service',association:'Association',properties:'Properties',objectProperties:'Object Properties',customizationType:'Customization Type',lastChangedBy:'Last Changed By',timestamp:'Timestamp'
+};
+function friendlyToken(t){
+  if(t===undefined || t===null) return '';
+  const raw=String(t);
+  if(/^\d+$/.test(raw)) return '#'+raw;
+  if(FRIENDLY_TOKEN[raw]) return FRIENDLY_TOKEN[raw];
+  return raw.replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/[_-]+/g,' ').replace(/^./,c=>c.toUpperCase());
+}
+function friendlyPath(path){
+  const toks=deepPathTokens(path);
+  if(!toks.length) return 'Object definition';
+  return toks.map(friendlyToken).join(' → ');
+}
+function semanticCategory(path){
+  const p=String(path||'').toLowerCase();
+  if(/field|permission|view|vui|label|display|datatype|length/.test(p)) return 'Form structure';
+  if(/action|qualification|runif|execute|order|phase|enable|workflow|guide|setfields|pushfields/.test(p)) return 'Workflow logic';
+  if(/menu|form|schema|target|container|webservice|association|reference|server/.test(p)) return 'References';
+  if(/custom|overlay|property|object-prop|objectprop/.test(p)) return 'Customization / properties';
+  if(/timestamp|modified|changed|owner|diary|id/.test(p)) return 'Audit / ignored metadata';
+  return 'Definition';
+}
+function semanticKindClass(kind){
+  const k=String(kind||'').toLowerCase();
+  if(k.includes('add'))return 'added';
+  if(k.includes('remove')||k.includes('missing'))return 'removed';
+  return 'changed';
+}
 function renderVisualDiffRows(rows){
   if(!rows||!rows.length)return '<div class="ok">No differences after normalization and configured ignore rules.</div>';
-  const counts={};
-  for(const r of rows){const k=r.kind||'change';counts[k]=(counts[k]||0)+1;}
-  const chips=Object.entries(counts).map(([k,v])=>`<span class="visual-chip"><strong>${html(k)}</strong>: ${v}</span>`).join('');
-  const limit=250;
-  const shown=rows.slice(0,limit);
-  const items=shown.map(r=>{
-    const kind=html(r.kind||'change');
-    const path=html(r.path||'');
-    const sv=r.source===undefined?'<span class="visual-diff-empty">No value</span>':html(stringifyValue(r.source));
-    const tv=r.target===undefined?'<span class="visual-diff-empty">No value</span>':html(stringifyValue(r.target));
-    return `<div class="visual-diff-row"><div class="visual-diff-kind">${kind}</div><div class="visual-diff-path">${path}</div><div><div class="visual-diff-label">Source</div><div class="visual-diff-value">${sv}</div></div><div><div class="visual-diff-label">Target</div><div class="visual-diff-value">${tv}</div></div></div>`;
+  const groups={};
+  const kindCounts={};
+  for(const r of rows){
+    const cat=semanticCategory(r.path);
+    (groups[cat]||(groups[cat]=[])).push(r);
+    const k=r.kind||'change';kindCounts[k]=(kindCounts[k]||0)+1;
+  }
+  const ordered=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length || a.localeCompare(b));
+  const categoryBadges=ordered.map(cat=>`<span class="semantic-badge changed"><strong>${html(cat)}</strong>${groups[cat].length}</span>`).join('');
+  const kindBadges=Object.entries(kindCounts).map(([k,v])=>`<span class="semantic-badge ${semanticKindClass(k)}"><strong>${html(k)}</strong>${v}</span>`).join('');
+  const maxPerGroup=80;
+  const sections=ordered.map(cat=>{
+    const items=groups[cat].slice(0,maxPerGroup).map(r=>{
+      const sv=r.source===undefined||r.source===null?'<span class="semantic-empty">No value</span>':html(compactValue(r.source));
+      const tv=r.target===undefined||r.target===null?'<span class="semantic-empty">No value</span>':html(compactValue(r.target));
+      return `<div class="semantic-row"><div class="semantic-kind">${html(r.kind||'change')}</div><div><div class="semantic-label">${html(friendlyPath(r.path))}</div><span class="semantic-path">${html(r.path||'')}</span></div><div class="semantic-value" title="${html(stringifyValue(r.source))}">${sv}</div><div class="semantic-value" title="${html(stringifyValue(r.target))}">${tv}</div></div>`;
+    }).join('');
+    const more=groups[cat].length>maxPerGroup?`<div class="small muted" style="padding:6px 9px">Showing ${maxPerGroup} of ${groups[cat].length} changes in this group. Use the Differences tab for the full list.</div>`:'';
+    return `<section class="semantic-group"><div class="semantic-group-head"><span>${html(cat)}</span><span class="pill">${groups[cat].length} change${groups[cat].length===1?'':'s'}</span></div><div class="semantic-group-body">${items}${more}</div></section>`;
   }).join('');
-  const more=rows.length>limit?`<div class="small muted">Showing ${limit} of ${rows.length} differences. Use the Differences or JSON tabs for the full raw view.</div>`:'';
-  return `<div class="visual-diff"><div class="visual-diff-summary">${chips}</div>${items}${more}</div>`;
+  return `<div class="visual-diff"><div class="small muted" style="margin-bottom:6px">Grouped semantic view. JSON tabs remain the exact technical source.</div><div class="semantic-summary">${categoryBadges}${kindBadges}</div>${sections}</div>`;
+}
+function relationTypeFromKey(key){
+  const k=String(key||'').toLowerCase();
+  if(k.includes('form')||k.includes('schema'))return 'Form';
+  if(k.includes('active'))return 'Active Link';
+  if(k.includes('filter'))return 'Filter';
+  if(k.includes('escalation'))return 'Escalation';
+  if(k.includes('menu'))return 'Menu';
+  if(k.includes('guide'))return 'Guide';
+  if(k.includes('webservice')||k.includes('web_service'))return 'Web Service';
+  if(k.includes('association'))return 'Association';
+  if(k.includes('container')||k.includes('application'))return 'Container';
+  if(k.includes('target'))return 'Target';
+  return 'Reference';
+}
+function isLikelyRelationKey(key){
+  return /(form|schema|target|menu|guide|active.?link|filter|escalation|container|application|web.?service|association|workflow|field)/i.test(String(key||''));
+}
+function extractRelationsFromObject(obj, objectType, objectName){
+  const rels=[]; const seen=new Set();
+  function add(type,label,value,path,direction='outgoing'){
+    if(value===undefined||value===null||value==='')return;
+    const val=String(value);
+    if(val.length>220)return;
+    if(val===objectName)return;
+    const key=[type,label,val,path,direction].join('|');
+    if(seen.has(key))return; seen.add(key);
+    rels.push({type,label,value:val,path,direction});
+  }
+  function walk(v,path=[],depth=0){
+    if(!v||depth>7||rels.length>180)return;
+    if(Array.isArray(v)){v.slice(0,250).forEach((x,i)=>walk(x,path.concat(String(i)),depth+1));return;}
+    if(typeof v!=='object')return;
+    for(const [k,val] of Object.entries(v)){
+      const newPath=path.concat(k);
+      if(isLikelyRelationKey(k)){
+        if(typeof val==='string'||typeof val==='number') add(relationTypeFromKey(k),friendlyToken(k),val,newPath.join(' → '));
+        else if(Array.isArray(val)) val.slice(0,50).forEach((x,i)=>{ if(typeof x==='string'||typeof x==='number') add(relationTypeFromKey(k),friendlyToken(k),x,newPath.concat(String(i)).join(' → ')); });
+      }
+      if(/qualification|runif/i.test(k) && typeof val==='string') add('Qualification',friendlyToken(k),val,newPath.join(' → '),'logic');
+      if(/executeorder|order/i.test(k) && (typeof val==='string'||typeof val==='number')) add('Execution',friendlyToken(k),val,newPath.join(' → '),'logic');
+      walk(val,newPath,depth+1);
+    }
+  }
+  walk(obj||{});
+  return rels;
+}
+function renderRelationTable(title, rels){
+  if(!rels.length)return `<section class="rel-section"><h3>${html(title)}</h3><div class="panel-pad muted">No obvious relationships found in the cached definition.</div></section>`;
+  const rows=rels.slice(0,160).map(r=>`<tr><td><span class="pill">${html(r.type)}</span></td><td>${html(r.label||'Reference')}</td><td>${html(r.value)}</td><td class="small muted">${html(r.path||'')}</td></tr>`).join('');
+  const more=rels.length>160?`<div class="small muted" style="padding:6px 9px">Showing 160 of ${rels.length} extracted relationships.</div>`:'';
+  return `<section class="rel-section"><h3>${html(title)}</h3><table class="rel-table"><thead><tr><th>Type</th><th>Attribute</th><th>Related object/value</th><th>Where found</th></tr></thead><tbody>${rows}</tbody></table>${more}</section>`;
+}
+function renderRelationships(c,o){
+  const name=o?.name||c?.name||'Object';
+  const type=TYPE_LABEL[c?.objectType||state.type]||c?.objectType||state.type;
+  const srcR=extractRelationsFromObject(c?.source,c?.objectType||state.type,name);
+  const tgtR=extractRelationsFromObject(c?.target,c?.objectType||state.type,name);
+  const combined=[...srcR,...tgtR];
+  const chips=combined.slice(0,18).map(r=>`<span class="rel-chip" title="${html(r.path||'')}"><span class="rel-type">${html(r.type)}</span>${html(r.value)}</span>`).join('') || '<span class="muted">No cached relationships found</span>';
+  return `<div class="rel-layout"><div class="small muted">This view is built from cached ARAPI details. It highlights likely related forms, workflow, menus, guides, containers, web services and associations without making a new live ARAPI call.</div><div class="rel-graph"><div class="rel-chip-cloud">${chips}</div><div class="rel-node"><div class="rel-node-title">${html(name)}</div><div class="rel-node-sub">${html(type)}</div></div><div class="rel-chip-cloud">${combined.slice(18,36).map(r=>`<span class="rel-chip" title="${html(r.path||'')}"><span class="rel-type">${html(r.type)}</span>${html(r.value)}</span>`).join('') || '<span class="muted">Open the tables below for details</span>'}</div></div>${renderRelationTable('Source relationships',srcR)}${renderRelationTable('Target relationships',tgtR)}</div>`;
 }
 function renderFullDiffRows(rows){
   if(!rows||!rows.length)return '<div class="ok">No differences after normalization and configured ignore rules.</div>';
@@ -1036,6 +1146,7 @@ function openFullDiff(){
   fullDiffTitle.textContent=o.name||c.name||'Object diff';
   fullDiffSubtitle.textContent=`${TYPE_LABEL[c.objectType||state.type]||c.objectType||state.type} · ${sourceEnv} → ${targetEnv} · status: ${o.status||'not compared'} · detail loaded: ${c.detailLoaded?'yes':'no'}`;
   fd_visual.innerHTML=renderVisualDiffRows(c.diffRows||[]);
+  fd_relationships.innerHTML=renderRelationships(c,o);
   fd_diff.innerHTML=renderFullDiffRows(c.diffRows||[]);
   fd_side.innerHTML=renderSideBySideJson(c.source,c.target,true);
   const sideHeads=fd_side.querySelectorAll('.side-diff-head div');

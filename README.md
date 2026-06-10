@@ -644,7 +644,7 @@ UI layout polish:
 - The global sync panel and each running environment card show either percentage progress or an animated working bar when exact progress is not yet known.
 
 
-## 1.1.32
+## 1.1.31
 
 - Sync progress no longer remains at the last running percentage when an environment is complete; completed cards show 100% / Sync complete.
 - Auto-start sync waits briefly after pod startup and retries server-login to avoid transient boot-time failures that succeed on manual retry.
@@ -653,4 +653,12 @@ UI layout polish:
 
 ## 1.1.32
 
-- Fixed Differences table metadata display for objects that exist only on one side. Missing-side timestamp and changed-by columns are now blank instead of falling back to the existing side.
+- Fixes Differences metadata for objects that exist only on one side. Source/target timestamp and changed-by columns are now blank on the missing side instead of showing stale cache metadata.
+
+## Version 1.1.33
+
+- Added a richer **Visual Summary** in object details. Differences are grouped into semantic sections such as Form structure, Workflow logic, References, Customization/properties and Definition.
+- Added human-readable labels for common DeepDiff JSON paths, while keeping the raw Differences and Side-by-side JSON tabs as the technical source of truth.
+- Added a **Relationships** tab in Details. It extracts likely relationships from cached ARAPI details and shows related forms, workflow, menus, guides, containers, web services and associations without making a live ARAPI call.
+- Relationship data is intentionally derived from the sync cache so opening Details remains fast.
+

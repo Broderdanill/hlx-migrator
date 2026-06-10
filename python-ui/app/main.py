@@ -427,9 +427,20 @@ def _merge_diff_metadata(objects: list[dict], source: str, target: str, object_t
     enriched = []
     for obj in objects:
         name = obj.get("name") or ""
-        sm = src_meta.get(name, {})
-        tm = tgt_meta.get(name, {})
-        ct = sm.get("customizationType") or tm.get("customizationType") or "Unknown"
+        status = obj.get("status") or ""
+
+        # The compare result is the source of truth for existence.  Do not show
+        # stale metadata from a cached row on the side where the object is known
+        # to be missing, otherwise the Differences view can display impossible
+        # values such as a target timestamp for an object that only exists in
+        # source.
+        sm = {} if status == "missing_in_source" else src_meta.get(name, {})
+        tm = {} if status == "missing_in_target" else tgt_meta.get(name, {})
+
+        source_ct = sm.get("customizationType") or ""
+        target_ct = tm.get("customizationType") or ""
+        ct = source_ct or target_ct or "Unknown"
+
         enriched.append({
             **obj,
             "objectType": object_type,
@@ -437,8 +448,8 @@ def _merge_diff_metadata(objects: list[dict], source: str, target: str, object_t
             "sourceLastChangedBy": sm.get("lastChangedBy", ""),
             "targetTimestamp": tm.get("timestamp", ""),
             "targetLastChangedBy": tm.get("lastChangedBy", ""),
-            "sourceCustomizationType": sm.get("customizationType", "Unknown"),
-            "targetCustomizationType": tm.get("customizationType", "Unknown"),
+            "sourceCustomizationType": source_ct,
+            "targetCustomizationType": target_ct,
             "customizationType": ct,
             "timestamp": sm.get("timestamp", "") or tm.get("timestamp", ""),
             "lastChangedBy": sm.get("lastChangedBy", "") or tm.get("lastChangedBy", ""),
