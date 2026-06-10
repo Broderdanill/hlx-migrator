@@ -129,14 +129,26 @@
     .table-wrap.loading{position:relative;opacity:.88}
     .table-wrap.loading::after{content:"Loading…";position:absolute;right:12px;top:10px;padding:4px 10px;border-radius:999px;background:rgba(0,185,246,.14);border:1px solid rgba(0,185,246,.34);color:#dceafa;font-size:11px;letter-spacing:.02em;pointer-events:none}
     .sync-current-step{margin-top:8px;padding:7px 9px;border:1px solid rgba(0,185,246,.22);border-radius:9px;background:rgba(0,185,246,.06);color:#dceafa}
+
+
+    /* 1.1.23 layout polish: compact rows, top environment selector and calmer header */
+    header{height:48px;padding:0 14px}.layout{grid-template-columns:275px 1fr;min-height:calc(100vh - 48px)}
+    .top-actions{gap:7px}.top-env-pair{display:inline-grid;grid-template-columns:auto minmax(86px,120px) auto minmax(86px,120px);gap:5px;align-items:center;border:1px solid rgba(0,185,246,.28);border-radius:999px;background:#06192b;padding:3px 7px}.top-env-pair .env-caption{color:var(--muted);font-size:11px}.top-env-pair select{min-height:24px;height:24px;border:0;background:transparent;padding:1px 16px 1px 4px;color:#f7f7f7}.top-env-pair .arrow{font-size:14px;line-height:1}.side-head{padding:8px 12px}.side-head .object-heading{font-weight:700;color:#f7f7f7}.tree button{min-height:25px;padding:3px 9px}.tree button.active{padding-left:6px}.tree-icon{width:15px;height:15px;border-radius:4px}.tree-icon svg{width:11px;height:11px}.badge{min-width:19px;padding:0 6px}.main{padding:10px 12px;gap:8px}.panel-pad{padding:8px}.filter-main-row{margin-top:7px}.filter-sub-row{margin-top:5px}.table-section-toolbar{padding:6px 8px}.result-table{font-size:10.8px}.result-table th,.result-table td{height:17px!important;line-height:1!important;padding:0 5px!important}.result-table th{height:22px!important;font-size:10.8px}.result-table tbody tr{height:17px!important;contain-intrinsic-size:17px!important}.result-table input[type="checkbox"]{width:11px!important;height:11px!important}.result-table button,.table-wrap button{min-height:17px!important;height:17px!important;padding:0 5px!important;border-radius:5px;font-size:10.6px}.copy-btn{min-height:17px!important;padding:0 5px!important}.status-badge{padding:1px 5px!important}.name-cell,.name-link{font-weight:520}.activity-panel .panel-pad{padding:7px 9px}.login-env .row input{min-height:26px}.session-hint{max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    @media(max-width:1050px){.top-env-pair{grid-template-columns:minmax(74px,1fr) auto minmax(74px,1fr)}.top-env-pair .env-caption{display:none}.top-env-pair select{width:82px}.session-hint{display:none}}
+
 </style>
 </head>
 <body>
 <header>
   <div class="brand"><img class="app-icon" src="/static/hlx-migrator-icon.png" alt="HLX Migrator icon"><h1>HLX Migrator</h1></div>
   <div class="top-actions">
-    <span class="mode-switch"><button id="browseModeBtn" onclick="setViewMode('browse')" class="active">Browse</button><button id="diffModeBtn" onclick="setViewMode('differences')">Differences</button></span><span id="modeHeader" class="small muted">Browse source</span>
-    <span id="sessionHeader" class="small muted">No browser sessions</span>
+    <span class="mode-switch"><button id="browseModeBtn" onclick="setViewMode('browse')" class="active">Browse</button><button id="diffModeBtn" onclick="setViewMode('differences')">Differences</button></span>
+    <span class="top-env-pair" title="Source and destination environments">
+      <span class="env-caption">Source</span><select id="sourceEnv" onchange="state.selected=[];state.offset=0;savePair();loadSourceObjects()"></select>
+      <span class="arrow">→</span><select id="targetEnv" onchange="state.selected=[];savePair();clearCompare()"></select>
+    </span>
+    <span id="modeHeader" class="small muted">Browse source</span>
+    <span id="sessionHeader" class="small muted session-hint">No browser sessions</span>
     <button class="ghost" onclick="toggleLogin()">Login</button>
     <button id="syncStatusBtn" class="ghost" onclick="toggleEnvMenu()">Sync Status</button>
   </div>
@@ -157,13 +169,8 @@
 <div class="layout">
   <aside>
     <div class="side-head">
-      <div class="small muted" style="margin-bottom:5px">Source → Destination</div>
-      <div class="env-pair">
-        <select id="sourceEnv" onchange="state.selected=[];state.offset=0;savePair();loadSourceObjects()"></select>
-        <span class="arrow">→</span>
-        <select id="targetEnv" onchange="state.selected=[];savePair();clearCompare()"></select>
-      </div>
-      <div style="margin-top:12px"><strong>Object Types</strong></div>
+      <div class="object-heading">Object Types</div>
+      <div class="small muted" style="margin-top:3px">Counts follow selected source/destination.</div>
     </div>
     <div class="tree" id="typeTree"></div>
   </aside>
@@ -359,7 +366,7 @@ function safeId(s){return String(s).replace(/[^a-zA-Z0-9_-]/g,'_')}
 function setStatus(t){statusText.textContent=t}
 function sessionFor(env){const s=state.sessions[env];return s && s.valid!==false ? s.sessionId||'' : ''}
 function saveSessions(){sessionStorage.setItem('hlx.sessions',JSON.stringify(state.sessions));renderLogin();renderHeader()}
-function renderHeader(){const active=Object.entries(state.sessions).filter(([e,s])=>s && s.valid!==false);const stale=Object.entries(state.sessions).filter(([e,s])=>s && s.valid===false);const activeText=active.map(([e,s])=>`${e}: ${s.user}`).join(' | ');const staleText=stale.length?` · stale: ${stale.map(([e])=>e).join(', ')}`:'';sessionHeader.textContent=(activeText||'No browser sessions')+staleText;const modeLabel=state.mode==='compare'?'Compare':state.mode==='differences'?'Differences':'Browse source';modeHeader.textContent=`${(state.source||'-').toUpperCase()} → ${(state.target||'-').toUpperCase()} · ${modeLabel}`;document.getElementById('browseModeBtn')?.classList.toggle('active',state.mode!=='differences');document.getElementById('diffModeBtn')?.classList.toggle('active',state.mode==='differences')}
+function renderHeader(){const active=Object.entries(state.sessions).filter(([e,s])=>s && s.valid!==false);const stale=Object.entries(state.sessions).filter(([e,s])=>s && s.valid===false);const activeText=active.map(([e,s])=>`${e}: ${s.user}`).join(' | ');const staleText=stale.length?` · stale: ${stale.map(([e])=>e).join(', ')}`:'';sessionHeader.textContent=(activeText||'No browser sessions')+staleText;const modeLabel=state.mode==='compare'?'Compare':state.mode==='differences'?'Differences':'Browse source';modeHeader.textContent=modeLabel;document.getElementById('browseModeBtn')?.classList.toggle('active',state.mode!=='differences');document.getElementById('diffModeBtn')?.classList.toggle('active',state.mode==='differences')}
 async function validateStoredSessions(){const entries=Object.entries(state.sessions);if(!entries.length)return;let changed=false;for(const [env,s] of entries){if(!s?.sessionId)continue;try{const r=await api('/api/session/validate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:s.sessionId})});if(r.valid){state.sessions[env]={...s,valid:true};}else{state.sessions[env]={...s,valid:false,expiredMessage:r.message||'Session expired'};}changed=true;}catch(e){state.sessions[env]={...s,valid:false,expiredMessage:e.message};changed=true;}}if(changed)saveSessions()}
 function toggleLogin(){loginPanel.classList.toggle('open')} function toggleEnvMenu(){envMenu.classList.toggle('hidden')}
 async function init(){applyColumnWidths();renderTree();await refreshAll(true);await validateStoredSessions();if(!state.source)state.source=state.envs[0]||'';if(!state.target)state.target=state.envs[1]||state.envs[0]||'';renderSelects();renderLogin();renderHeader();renderScope();await loadSourceObjects();scheduleRefresh()}
@@ -482,7 +489,7 @@ function renderJobs(){
   const menu=document.getElementById('jobsMenu');if(menu)menu.innerHTML=htmlRows;
   jobs.innerHTML=htmlRows||'<div class="muted">No new events. Clear View only hides events that existed when it was clicked.</div>';
 }
-function renderLogin(){loginGrid.innerHTML=state.envs.map(env=>{const id=safeId(env),s=state.sessions[env];const valid=s&&s.valid!==false;const label=s?(valid?'logged in':'session expired'):'not logged in';const cls=s?(valid?'ok':'warn'):'bad';return `<div class="login-env"><div class="toolbar"><h3>${env.toUpperCase()} <span class="${cls}">${label}</span></h3></div>${s&&s.valid===false?`<div class="small warn">Session is stale. Log in again before migration.</div>`:''}<div class="row"><label>User<br><input id="u_${id}" value="${s?.user||''}"></label><label>Password<br><input id="p_${id}" type="password"></label><label>Auth<br><input id="a_${id}"></label><button onclick="loginEnv('${env}')" class="primary">Log in</button><button onclick="logoutEnv('${env}')" class="danger">Log out</button></div></div>`}).join('')}
+function renderLogin(){loginGrid.innerHTML=state.envs.map(env=>{const id=safeId(env),s=state.sessions[env];const valid=s&&s.valid!==false;const label=s?(valid?'logged in':'session expired'):'not logged in';const cls=s?(valid?'ok':'warn'):'bad';return `<div class="login-env"><div class="toolbar"><h3>${env.toUpperCase()} <span class="${cls}">${label}</span></h3></div>${s&&s.valid===false?`<div class="small warn">Session is stale. Log in again before migration.</div>`:''}<div class="row"><label>User<br><input id="u_${id}" value="${s?.user||''}" autocomplete="username"></label><label>Password<br><input id="p_${id}" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginEnv('${env}')"></label><label>Auth<br><input id="a_${id}" onkeydown="if(event.key==='Enter')loginEnv('${env}')"></label><button onclick="loginEnv('${env}')" class="primary">Log in</button><button onclick="logoutEnv('${env}')" class="danger">Log out</button></div></div>`}).join('')}
 async function loginEnv(env){const id=safeId(env);const body={username:document.getElementById('u_'+id).value,password:document.getElementById('p_'+id).value,authentication:document.getElementById('a_'+id).value};setStatus(`Logging in to ${env}...`);const r=await api(`/api/environments/${env}/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});state.sessions[env]={sessionId:r.sessionId,user:r.user,serverVersion:r.serverVersion,valid:true};document.getElementById('p_'+id).value='';saveSessions();setStatus(`${env}: logged in as ${r.user}`)}
 async function logoutEnv(env){const sid=sessionFor(env);if(sid){try{await api('/api/session/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sid})})}catch{}}delete state.sessions[env];saveSessions()}
 function selectType(t){

@@ -589,4 +589,12 @@ UI layout polish:
 
 
 ## Recent changes
-- **1.1.22**: Made result-table rows even more compact for high-volume object lists, with tighter cells, checkboxes, and row action buttons.
+- **1.1.23**: Made result-table rows even more compact for high-volume object lists, with tighter cells, checkboxes, and row action buttons.
+
+
+## 1.1.23
+
+- Moved source/destination selection into the top header for a clearer flow.
+- Made result rows significantly more compact for large object lists.
+- Added Enter-to-login support in password/auth fields.
+- Tightened navigation and table spacing.
