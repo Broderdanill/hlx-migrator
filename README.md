@@ -644,7 +644,7 @@ UI layout polish:
 - The global sync panel and each running environment card show either percentage progress or an animated working bar when exact progress is not yet known.
 
 
-## 1.1.30
+## 1.1.31
 
 - Sync progress no longer remains at the last running percentage when an environment is complete; completed cards show 100% / Sync complete.
 - Auto-start sync waits briefly after pod startup and retries server-login to avoid transient boot-time failures that succeed on manual retry.

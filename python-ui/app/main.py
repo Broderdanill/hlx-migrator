@@ -609,11 +609,19 @@ async def server_cache_refresh_environment(env: str, set_global_running: bool = 
                     add_job(env, "details", "running", msg, {k: v for k, v in p.items() if k != "message"}, progress=pct)
                 except Exception:
                     pass
-            details = await deep_cache_object_details(env, session_id=session_id, service_cache=True, progress_cb=_detail_progress)
+            try:
+                details = await deep_cache_object_details(env, session_id=session_id, service_cache=True, progress_cb=_detail_progress)
+            except Exception as e:
+                if not sync_cfg.get("continue_on_error", True):
+                    raise
+                details = {"status": "partial", "errors": [{"objectType": "details", "name": "*sync*", "error": str(e)}], "counts": {}}
+                add_job(env, "details", "partial", f"Deep metadata cache could not fully complete: {e}", progress=88)
             env_status["details"] = details
             env_status["steps"].append({"objectType": "details", "status": details.get("status", "ok"), "finishedAt": now_iso(), "result": details})
             detail_counts = {k: v.get("loaded", 0) for k, v in (details.get("counts") or {}).items()}
-            add_job(env, "details", details.get("status", "ok"), "Deep metadata cache completed", detail_counts, progress=88)
+            detail_errors = len(details.get("errors") or [])
+            detail_msg = "Deep metadata cache completed" if detail_errors == 0 else f"Deep metadata cache completed with {detail_errors} detail errors"
+            add_job(env, "details", details.get("status", "ok"), detail_msg, detail_counts, progress=88)
 
         env_status.update({"status": "ok", "finishedAt": now_iso()})
         add_job(env, "environment", "ok", f"Synchronization completed for {env.upper()}", progress=100)

@@ -1,4 +1,5 @@
 import httpx
+from urllib.parse import quote
 from .settings import ARAPI_BASE_URL, config_store
 
 
@@ -8,6 +9,11 @@ class ArApiClient:
 
     def _headers(self, session_id: str | None = None) -> dict:
         return {"X-HLX-Session": session_id} if session_id else {}
+
+    def _path_name(self, name: str) -> str:
+        # AR object names may contain spaces, plus signs or slash-like characters.
+        # Encode as a single path segment so detail endpoints do not break during deep sync.
+        return quote(str(name), safe="")
 
     def _clean_export_items(self, items: list[dict]) -> list[dict]:
         """Keep only fields accepted by the Java ARAPI ExportItem model.
@@ -91,7 +97,7 @@ class ArApiClient:
 
     async def get_form(self, session_id: str, name: str) -> dict:
         async with httpx.AsyncClient(timeout=180) as client:
-            r = await client.get(f"{self.base_url}/metadata/forms/{name}", headers=self._headers(session_id))
+            r = await client.get(f"{self.base_url}/metadata/forms/{self._path_name(name)}", headers=self._headers(session_id))
             self._raise_for_status_with_body(r)
             return r.json()
 
@@ -174,7 +180,7 @@ class ArApiClient:
         if not endpoint:
             raise ValueError(f"Unsupported object type for detail load: {object_type}")
         async with httpx.AsyncClient(timeout=240) as client:
-            r = await client.get(f"{self.base_url}/metadata/{endpoint}/{name}", headers=self._headers(session_id))
+            r = await client.get(f"{self.base_url}/metadata/{endpoint}/{self._path_name(name)}", headers=self._headers(session_id))
             self._raise_for_status_with_body(r)
             return r.json()
 

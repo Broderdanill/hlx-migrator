@@ -558,39 +558,53 @@ async def deep_cache_object_details(
 
     for object_type in object_types:
         started = datetime.now(timezone.utc).isoformat()
-        rows = get_cached_objects(ns, object_type)
-        candidates = []
-        skipped = 0
-        for row in rows:
-            try:
-                payload = json.loads(row.json_data)
-            except Exception:
-                payload = {}
-            if not refresh_existing and payload.get("definitionLoaded") is True and payload.get("indexOnly") is not True:
-                skipped += 1
-                continue
-            candidates.append(row.object_name)
-        if max_per_type > 0:
-            candidates = candidates[:max_per_type]
-
-        requested = len(candidates)
+        rows = []
         loaded = 0
         failed = 0
-        emit_progress(object_type, f"Preparing {object_type} details ({requested} to load, {skipped} already cached)", 0, max(requested, 1))
-        for i in range(0, requested, concurrency * 4):
-            chunk = candidates[i:i + concurrency * 4]
-            results = await asyncio.gather(*(load_one(object_type, name) for name in chunk))
-            for name, (ok, err) in zip(chunk, results):
-                if ok:
-                    loaded += 1
-                else:
-                    failed += 1
-                    error = {"objectType": object_type, "name": name, "error": err}
-                    errors.append(error)
-                    if not continue_on_error:
-                        raise RuntimeError(f"Detail cache failed for {object_type} {name}: {err}")
-            emit_progress(object_type, f"Loaded {loaded}/{requested} {object_type} details", loaded + failed, max(requested, 1))
-            await asyncio.sleep(0)
+        skipped = 0
+        requested = 0
+        try:
+            rows = get_cached_objects(ns, object_type)
+            candidates = []
+            for row in rows:
+                try:
+                    payload = json.loads(row.json_data)
+                except Exception:
+                    payload = {}
+                if not refresh_existing and payload.get("definitionLoaded") is True and payload.get("indexOnly") is not True:
+                    skipped += 1
+                    continue
+                candidates.append(row.object_name)
+            if max_per_type > 0:
+                candidates = candidates[:max_per_type]
+
+            requested = len(candidates)
+            emit_progress(object_type, f"Preparing {object_type} details ({requested} to load, {skipped} already cached)", 0, max(requested, 1))
+            for i in range(0, requested, concurrency * 4):
+                chunk = candidates[i:i + concurrency * 4]
+                results = await asyncio.gather(*(load_one(object_type, name) for name in chunk), return_exceptions=True)
+                for name, result in zip(chunk, results):
+                    if isinstance(result, Exception):
+                        ok, err = False, str(result)
+                    else:
+                        ok, err = result
+                    if ok:
+                        loaded += 1
+                    else:
+                        failed += 1
+                        error = {"objectType": object_type, "name": name, "error": err}
+                        errors.append(error)
+                        if not continue_on_error:
+                            raise RuntimeError(f"Detail cache failed for {object_type} {name}: {err}")
+                emit_progress(object_type, f"Loaded {loaded}/{requested} {object_type} details", loaded + failed, max(requested, 1))
+                await asyncio.sleep(0)
+        except Exception as e:
+            failed += 1
+            err = str(e)
+            errors.append({"objectType": object_type, "name": "*type*", "error": err})
+            emit_progress(object_type, f"{object_type} detail cache failed: {err}", requested, max(requested, 1))
+            if not continue_on_error:
+                raise
 
         emit_progress(object_type, f"Finished {object_type}: {loaded} loaded, {failed} failed, {skipped} skipped", requested, max(requested, 1))
         counts[object_type] = {"requested": requested, "loaded": loaded, "failed": failed, "skipped": skipped, "totalCached": len(rows)}
