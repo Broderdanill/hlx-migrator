@@ -899,10 +899,12 @@ function renderRows(){
     const statusText=compared?displayStatus(o.status):'source';
     const sourceMark=(state.mode==='differences' && o.status==='missing_in_source')?'-':'✓';
     const targetMark=(state.mode==='differences' && o.status==='missing_in_target')?'-':(compared?(o.status==='missing_in_target'?'-':'✓'):'-');
-    const sourceTs=o.sourceTimestamp||o.timestamp||'';
-    const sourceBy=o.sourceLastChangedBy||o.lastChangedBy||'';
-    const targetTs=o.targetTimestamp||'';
-    const targetBy=o.targetLastChangedBy||'';
+    const sourceMissing=state.mode==='differences' && o.status==='missing_in_source';
+    const targetMissing=state.mode==='differences' && o.status==='missing_in_target';
+    const sourceTs=sourceMissing?'':(o.sourceTimestamp||(!targetMissing?o.timestamp:'')||'');
+    const sourceBy=sourceMissing?'':(o.sourceLastChangedBy||(!targetMissing?o.lastChangedBy:'')||'');
+    const targetTs=targetMissing?'':(o.targetTimestamp||'');
+    const targetBy=targetMissing?'':(o.targetLastChangedBy||'');
     const custom=o.customizationType||o.sourceCustomizationType||o.targetCustomizationType||'';
     return `<tr class="${checked?'selected':''}"><td class="select-all-cell"><input class="check" type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation();toggleSelected('${esc(o.name)}')"></td><td class="name-cell"><span class="name-link" onclick="toggleSelected('${esc(o.name)}')">${html(o.name)}</span></td><td class="copy-cell"><button class="ghost copy-btn" title="Copy name" onclick="event.stopPropagation();copyName('${esc(o.name)}')">⧉</button></td><td class="small muted mono">${html(sourceTs)}</td><td class="small muted">${html(sourceBy)}</td><td class="small muted mono">${html(targetTs)}</td><td class="small muted">${html(targetBy)}</td><td class="small muted">${html(custom)}</td><td class="s-${o.status}">${statusText}</td><td>${sourceMark}</td><td>${targetMark}</td><td><button class="ghost" onclick="showDetailByIndex(${idx})">Details</button></td></tr>`
   }).join('')||'<tr><td colspan="12" class="muted">No objects match the filter, or the cache is not ready yet.</td></tr>';

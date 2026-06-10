@@ -644,8 +644,13 @@ UI layout polish:
 - The global sync panel and each running environment card show either percentage progress or an animated working bar when exact progress is not yet known.
 
 
-## 1.1.31
+## 1.1.32
 
 - Sync progress no longer remains at the last running percentage when an environment is complete; completed cards show 100% / Sync complete.
 - Auto-start sync waits briefly after pod startup and retries server-login to avoid transient boot-time failures that succeed on manual retry.
 - Configurable with `HLX_AUTO_SYNC_START_DELAY_SECONDS` and `HLX_AUTO_SYNC_LOGIN_RETRIES`.
+
+
+## 1.1.32
+
+- Fixed Differences table metadata display for objects that exist only on one side. Missing-side timestamp and changed-by columns are now blank instead of falling back to the existing side.
